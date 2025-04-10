@@ -417,6 +417,7 @@
             <tr>
               <th>Name</th>
               <th>Email</th>
+              <th>Instagram</th>
               <th>Status</th>
               <th>Kills</th>
               <th>Actions</th>
@@ -1054,7 +1055,7 @@
                 user.email.substring(0, 2).toUpperCase();
             initDashboard(); // Load initial view
             setupNavigation(); // Setup sidebar clicks
-            loadPlayers(); // Load players initially for the default view if it includes the player table
+            (); // Load players initially for the default view if it includes the player table
           }
         }).catch(error => {
           console.error("Admin check error:", error);
@@ -1109,7 +1110,7 @@
               initDashboard();
               break;
             case 'players':
-              loadPlayers();
+              ();
               break;
             case 'targets':
               loadTargets();
@@ -1187,7 +1188,7 @@
             initDashboard();
             break;
           case 'players':
-            loadPlayers();
+            ();
             break;
           case 'targets':
             loadTargets();
