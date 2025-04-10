@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Senior Assassin</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #32b1b1;
+      --secondary: #000000;
+      --accent: #ffffff;
+      --dark: #333333;
+      --light: #f5f5f5;
+      --success: #00b894;
+      --error: #d63031;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      /* background: linear-gradient(135deg, var(--primary), var(--secondary)); */
+      /* REMOVED */
+      background-color: var(--secondary);
+      /* Fallback */
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--dark);
+      /* Content is on white box, so dark text is ok */
+    }
+
+    .auth-container {
+      width: 100%;
+      max-width: 500px;
+      padding: 3rem;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    /* Logo styles */
+    .logo {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo h1 {
+      font-size: 2rem;
+      color: var(--primary);
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    /* Tab styles */
+    .tabs {
+      display: flex;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #eee;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+      color: #888;
+      transition: all 0.3s;
+    }
+
+    .tab.active {
+      color: var(--primary);
+      border-bottom: 3px solid var(--accent);
+      margin-bottom: -2px;
+    }
+
+    /* Form styles */
+    .auth-form {
+      display: none;
+    }
+
+    .auth-form.active {
+      display: block;
+      animation: slideUp 0.5s ease;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+    }
+
+    /* Password toggle */
+    .password-container {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #888;
+    }
+
+    /* Button styles */
+    .btn {
+      width: 100%;
+      padding: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: var(--primary);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 1rem;
+    }
+
+    .btn:disabled {
+      /* Style for disabled button */
+      background-color: #cccccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .btn:disabled:hover {
+      /* Prevent hover effects when disabled */
+      background: #cccccc;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn:hover:not(:disabled) {
+      /* Apply hover only when not disabled */
+      background: #5549d6;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+    }
+
+
+    /* Error message */
+    .error-message {
+      color: var(--error);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      min-height: 1.2em;
+      /* Reserve space to prevent layout jumps */
+      display: block;
+      /* Always block to reserve space */
+      visibility: hidden;
+      /* Hide initially */
+    }
+
+    .error-message.show {
+      /* Class to make visible */
+      visibility: visible;
+    }
+
+    .error-message.success {
+      /* Style for success messages */
+      color: var(--success);
+    }
+
+
+    /* Divider */
+    .divider {
+      text-align: center;
+      margin: 1.5rem 0;
+      color: #888;
+      position: relative;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: 45%;
+      height: 1px;
+      background: #ddd;
+    }
+
+    .divider::before {
+      left: 0;
+    }
+
+    .divider::after {
+      right: 0;
+    }
+
+    /* Social login */
+    .social-login {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .social-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: var(--dark);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .social-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Footer text */
+    .footer-text {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #666;
+    }
+
+    .footer-text a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .auth-container {
+        padding: 2rem;
+        margin: 1rem;
+      }
+
+      .logo h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-container">
+    <div class="logo">
+      <h1>Senior<span>Assassin</span></h1>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Login</div>
+      <div class="tab" onclick="switchTab('signup')">Sign Up</div>
+    </div>
+
+    <!-- Login Form -->
+    <form class="auth-form active" id="login-form" onsubmit="login(event); return false;">
+      <div class="input-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" class="input-field" placeholder="Enter your email" required>
+      </div>
+
+      <div class="input-group">
+        <label for="login-password">Password</label>
+        <div class="password-container">
+          <input type="password" id="login-password" class="input-field" placeholder="Enter your password" required>
+          <i class="fas fa-eye toggle-password" onclick="togglePassword('login-password')"></i>
+        </div>
+      </div>
+
+      <div class="error-message" id="login-error"></div>
+
+      <button type="submit" class="btn" id="login-btn">
+        <i class="fas fa-sign-in-alt"></i> Login
+      </button>
+
+      <p class="footer-text">
+        Don't have an account? <a href="#" onclick="switchTab('signup'); return false;">Sign up</a>
+      </p>
+    </form>
+
+    <!-- Signup Form -->
+    <form class="auth-form" id="signup-form" onsubmit="signup(event); return false;">
+      <div class="input-group">
+        <label for="signup-email">Email</label>
+        <input type="email" id="signup-email" class="input-field" placeholder="Enter your email" required>
+      </div>
+
+      <div class="input-group">
+        <label for="first-name">First Name</label>
+        <input type="text" id="first-name" class="input-field" placeholder="Your first name" required>
+      </div>
+
+      <div class="input-group">
+        <label for="last-name">Last Name</label>
+        <input type="text" id="last-name" class="input-field" placeholder="Your last name" required>
+      </div>
+
+      <div class="input-group">
+        <label for="academy">Academy</label>
+        <select id="academy" class="input-field" required>
+          <option value="">Select your academy</option>
+          <option value="Music">Music</option>
+          <option value="Visual">Visual</option>
+          <option value="Media">Media</option>
+          <option value="Dance">Dance</option>
+          <option value="Theatre">Theatre</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label for="instagram">Instagram (optional)</label>
+        <input type="text" id="instagram" class="input-field" placeholder="@username">
+      </div>
+
+      <div class="input-group">
+        <label for="signup-password">Password</label>
+        <div class="password-container">
+          <input type="password" id="signup-password" class="input-field" placeholder="Create password (min 6 chars)"
+            required minlength="6">
+          <i class="fas fa-eye toggle-password" onclick="togglePassword('signup-password')"></i>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="confirm-password">Confirm Password</label>
+        <div class="password-container">
+          <input type="password" id="confirm-password" class="input-field" placeholder="Confirm your password" required
+            minlength="6">
+          <i class="fas fa-eye toggle-password" onclick="togglePassword('confirm-password')"></i>
+        </div>
+      </div>
+
+      <div class="error-message" id="signup-error"></div>
+
+      <button type="submit" class="btn" id="signup-btn">
+        <i class="fas fa-user-plus"></i> Create Account
+      </button>
+
+      <p class="footer-text">
+        Already have an account? <a href="#" onclick="switchTab('login'); return false;">Login</a>
+      </p>
+    </form>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXIYp8MFRivErUtdMJFaaxq4P1MbG1FgM",
+      authDomain: "vapa-senior-assassin.firebaseapp.com",
+      projectId: "vapa-senior-assassin",
+      storageBucket: "vapa-senior-assassin.appspot.com",
+      messagingSenderId: "455341197665",
+      appId: "1:455341197665:web:63881fd6b7d693a9865d20",
+      measurementId: "G-7KN3VT384R"
+    };
+
+    // Initialize Firebase
+    let app;
+    if (!firebase.apps.length) {
+      app = firebase.initializeApp(firebaseConfig);
+    } else {
+      app = firebase.app();
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Tab switching
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+      document.querySelectorAll('.auth-form').forEach(form => {
+        form.classList.remove('active');
+      });
+      document.getElementById(`${tabName}-form`).classList.add('active');
+
+      hideError('login-error');
+      hideError('signup-error');
+    }
+
+    // Toggle password visibility
+    function togglePassword(fieldId) {
+      const field = document.getElementById(fieldId);
+      const icon = field.nextElementSibling;
+
+      if (field.type === 'password') {
+        field.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        field.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    // --- REVISED LOGIN FUNCTION (Admin Check First) ---
+    async function login(event) {
+      if (event) event.preventDefault();
+
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const errorElementId = 'login-error';
+      const button = document.getElementById('login-btn');
+
+      hideError(errorElementId);
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+
+      if (!email || !password) {
+        showError(errorElementId, 'Please fill in both email and password');
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+        return;
+      }
+
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        console.log("Auth successful for:", user.email, user.uid);
+
+        // --- *** STEP 1: Check if user is ADMIN *** ---
+        const adminDocRef = db.collection('admins').doc(user.uid);
+        const adminDoc = await adminDocRef.get();
+
+        if (adminDoc.exists) {
+          // User IS an admin - bypass player approval check and redirect
+          console.log("User is an ADMIN. Redirecting to admin panel...");
+          // No need to call checkAdminAndRedirect here, just redirect directly
+          window.location.href = 'admin.html';
+          // No need to re-enable button as redirect should happen
+          return; // Stop further execution for admin
+        }
+
+        // --- STEP 2: If NOT admin, proceed with Player Approval Check ---
+        console.log("User is NOT an admin. Checking player approval status...");
+        const playerDocRef = db.collection('players').doc(user.uid);
+        const playerDoc = await playerDocRef.get();
+
+        if (!playerDoc.exists) {
+          console.error("Firestore player profile not found for non-admin user:", user.uid);
+          showError(errorElementId, 'Login successful, but profile data missing. Please contact admin.');
+          await auth.signOut(); // Sign out user
+        } else {
+          const playerData = playerDoc.data();
+          console.log("Player Data:", playerData);
+
+          if (playerData.approvalStatus === 'approved') {
+            console.log("Non-admin user approved. Redirecting to profile...");
+            // Redirect directly to profile for approved non-admin users
+            window.location.href = 'profile.html';
+            // No need to re-enable button
+            return; // Stop execution
+          } else if (playerData.approvalStatus === 'pending') {
+            console.log("User pending approval.");
+            showError(errorElementId, 'Your account is awaiting admin approval.');
+            await auth.signOut(); // Sign out user
+          } else if (playerData.approvalStatus === 'rejected') {
+            console.log("User rejected.");
+            showError(errorElementId, 'Your account registration was rejected.');
+            await auth.signOut(); // Sign out user
+          } else {
+            console.log("Unknown approval status:", playerData.approvalStatus);
+            showError(errorElementId, 'Unknown account status. Please contact admin.');
+            await auth.signOut(); // Sign out user
+          }
+        }
+
+      } catch (error) {
+        console.error("Login error:", error);
+        handleAuthError(errorElementId, error); // Handle Auth errors like wrong password
+      } finally {
+        // Re-enable button ONLY if no redirect happened (error or pending/rejected non-admin)
+        setTimeout(() => {
+          // Check if we are still on the login page after a short delay
+          if (window.location.pathname.includes('login.html')) {
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+          }
+        }, 100); // Delay allows potential redirect to start
+      }
+    }
+
+
+    // --- MODIFIED SIGNUP FUNCTION (Sets Pending Status) ---
+    async function signup(event) {
+      if (event) event.preventDefault();
+
+      const email = document.getElementById('signup-email').value;
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const firstName = document.getElementById('first-name').value;
+      const lastName = document.getElementById('last-name').value;
+      const academy = document.getElementById('academy').value;
+      const errorElementId = 'signup-error';
+      const button = document.getElementById('signup-btn');
+
+      hideError(errorElementId);
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+
+      // Client-side validation
+      if (!email || !password || !confirmPassword || !firstName || !lastName || !academy) {
+        showError(errorElementId, 'Please fill in all required fields');
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+        return;
+      }
+      if (password !== confirmPassword) {
+        showError(errorElementId, 'Passwords do not match');
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+        return;
+      }
+      if (password.length < 6) {
+        showError(errorElementId, 'Password must be at least 6 characters');
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+        return;
+      }
+
+      try {
+        // Create the Firebase Auth user
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        console.log("Auth user created:", user.email);
+
+        // Create user profile in Firestore with 'pending' status
+        await createUserProfile(user); // This function now sets pending status
+        console.log("Firestore profile created with pending status.");
+
+        // --- DO NOT AUTO-LOGIN ---
+        // --- Show Pending Message ---
+        showError(errorElementId, 'Account created successfully! Please wait for admin approval before logging in.', 'success');
+        document.getElementById('signup-form').reset(); // Clear form
+
+        // --- Optionally sign the user out of Auth immediately ---
+        // This ensures they MUST log in again after approval
+        await auth.signOut();
+        console.log("User signed out after registration, awaiting approval.");
+
+
+      } catch (error) {
+        console.error("Signup error:", error);
+        if (error.message && error.message.includes("Firestore")) { // Check specific error type if possible
+          showError(errorElementId, "Account partly created, but profile data failed to save. Please contact admin.");
+          // Consider attempting to delete the Auth user here if Firestore failed
+          // if (auth.currentUser) { try { await auth.currentUser.delete(); console.log("Cleaned up partially created auth user."); } catch (delErr) { console.error("Failed to clean up auth user:", delErr); } }
+        } else {
+          handleAuthError(errorElementId, error);
+        }
+      } finally {
+        // Always re-enable the signup button after attempt
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
+      }
+    }
+
+    // --- MODIFIED createUserProfile FUNCTION (Sets Pending Status) ---
+    async function createUserProfile(user) {
+      const playerRef = db.collection('players').doc(user.uid);
+      const statsRef = db.collection('stats').doc('current'); // Define statsRef here
+
+      try {
+        const firstName = document.getElementById('first-name').value;
+        const lastName = document.getElementById('last-name').value;
+        const academy = document.getElementById('academy').value;
+        const instagram = document.getElementById('instagram').value.replace('@', '');
+
+        // Set initial player data with 'pending' approval status
+        await playerRef.set({
+          email: user.email,
+          firstName: firstName,
+          lastName: lastName,
+          fullName: `${firstName} ${lastName}`,
+          academy: academy,
+          instagram: instagram || null,
+          kills: 0,
+          status: 'pending', // General status can also start as pending
+          approvalStatus: 'pending', // *** NEW/IMPORTANT FIELD ***
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log("User profile created in Firestore for:", user.email, "with status: pending");
+
+        // --- Update Stats: Increment totalPlayers ONLY ---
+        await db.runTransaction(async (transaction) => {
+          const statsDoc = await transaction.get(statsRef);
+          let newTotal = 1;
+          if (statsDoc.exists) {
+            newTotal = (statsDoc.data().totalPlayers || 0) + 1;
+          }
+          // Make sure activePlayers exists even if not incrementing
+          const currentActive = statsDoc.exists ? (statsDoc.data().activePlayers || 0) : 0;
+          transaction.set(statsRef, {
+            totalPlayers: newTotal,
+            activePlayers: currentActive // Keep active players count as is
+          }, { merge: true });
+        });
+        console.log("Stats updated: totalPlayers incremented.");
+
+      } catch (error) {
+        console.error("Error creating user profile or updating stats in Firestore:", error);
+        throw new Error("Firestore profile/stats update failed: " + error.message);
+      }
+    }
+
+    // --- Error Handling Functions (No changes needed) ---
+    function showError(elementId, message, type = 'error') {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = 'error-message show';
+      if (type === 'success') {
+        element.classList.add('success');
+      } else {
+        element.classList.remove('success');
+      }
+    }
+
+    function hideError(elementId) {
+      const element = document.getElementById(elementId);
+      element.textContent = ''; // Clear text
+      element.className = 'error-message'; // Hide (remove .show) and remove .success
+    }
+
+    function handleAuthError(elementId, error) {
+      const errorMap = {
+        'auth/invalid-email': 'Invalid email address format.',
+        'auth/user-disabled': 'This account has been disabled.',
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/email-already-in-use': 'This email address is already registered.',
+        'auth/operation-not-allowed': 'Email/password sign-up is not enabled.',
+        'auth/weak-password': 'Password is too weak (must be at least 6 characters).',
+        'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again, or reset your password.'
+      };
+      const message = errorMap[error.code] || `An unexpected error occurred (${error.code}). Please try again.`;
+      showError(elementId, message);
+      console.error("Auth error:", error.code, error.message); // Log code and message
+    }
+
+
+    const bodyElement = document.body;
+    const primaryColor = getComputedStyle(bodyElement).getPropertyValue('--primary').trim() || '#32b1b1';
+    const secondaryColor = getComputedStyle(bodyElement).getPropertyValue('--secondary').trim() || '#000000';
+
+    const SMOOTHING_FACTOR = 0.08;
+    const GRADIENT_END_PRIMARY = '15%'; // Primary color fully visible up to 15% radius
+    const GRADIENT_START_SECONDARY = '80%'; // Secondary color starts becoming dominant from 80% radius
+
+    let targetMouseX = window.innerWidth / 2;
+    let targetMouseY = window.innerHeight / 2;
+    let currentGradientX = window.innerWidth / 2;
+    let currentGradientY = window.innerHeight / 2;
+    let animationFrameId = null;
+
+    function updateTargetPosition(event) {
+      targetMouseX = event.clientX;
+      targetMouseY = event.clientY;
+      if (!animationFrameId) {
+        startAnimationLoop();
+      }
+    }
+
+    function animateGradient() {
+      const dx = targetMouseX - currentGradientX;
+      const dy = targetMouseY - currentGradientY;
+
+      currentGradientX += dx * SMOOTHING_FACTOR;
+      currentGradientY += dy * SMOOTHING_FACTOR;
+
+      const xPercent = (currentGradientX / window.innerWidth) * 100;
+      const yPercent = (currentGradientY / window.innerHeight) * 100;
+
+      const gradientStyle = `radial-gradient(
+            circle at ${xPercent}% ${yPercent}%,
+            ${primaryColor} ${GRADIENT_END_PRIMARY},
+            ${secondaryColor} ${GRADIENT_START_SECONDARY}
+        )`;
+
+      bodyElement.style.background = gradientStyle;
+
+      if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      } else {
+        animationFrameId = null;
+      }
+    }
+
+    function startAnimationLoop() {
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      }
+    }
+
+    document.addEventListener('mousemove', updateTargetPosition);
+
+    const initialXPercent = 50;
+    const initialYPercent = 50;
+    const initialGradient = `radial-gradient(circle at ${initialXPercent}% ${initialYPercent}%, ${primaryColor} ${GRADIENT_END_PRIMARY}, ${secondaryColor} ${GRADIENT_START_SECONDARY})`;
+    bodyElement.style.background = initialGradient;
+    startAnimationLoop();
+
+  </script>
+</body>
+
+</html>

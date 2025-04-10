@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile | Senior Assassin</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #32b1b1;
+      --secondary: #000000;
+      --accent: #ffffff;
+      --dark: #333333;
+      --light: #f5f5f5;
+      --success: #00b894;
+      --danger: #d63031;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: var(--secondary);
+      /* Fallback */
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      /* Added for consistency */
+      right: 0;
+      /* Added for consistency */
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background-color: rgba(45, 52, 54, 0.7);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .nav-links a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      position: relative;
+      transition: color 0.2s ease;
+      /* Added smooth transition */
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-links a.active {
+      color: var(--accent);
+      /* Optional: Add an underline or bolder font-weight for active */
+      /* font-weight: 700; */
+      /* border-bottom: 2px solid var(--accent); */
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 6rem 2rem 2rem;
+      /* Adjusted top padding to account for fixed header */
+    }
+
+    .profile-header,
+    .target-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .avatar {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 600;
+      background: var(--secondary);
+      flex-shrink: 0;
+      /* Prevent avatar from shrinking */
+    }
+
+    .user-info h1 {
+      margin-bottom: 0.25rem;
+      /* Add spacing below name */
+    }
+
+    .user-info p {
+      margin-bottom: 0.25rem;
+      /* Add spacing between lines */
+      color: #555;
+      /* Slightly dimmer text for details */
+    }
+
+    .user-info p:last-of-type {
+      margin-bottom: 0.5rem;
+      /* More space before status badge */
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: white;
+      text-transform: uppercase;
+      /* Make status uppercase */
+    }
+
+    .status-active {
+      background: var(--success);
+    }
+
+    .status-eliminated {
+      background: var(--danger);
+    }
+
+    /* Add a class for loading state */
+    .status-loading {
+      background: #ccc;
+    }
+
+    .game-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      /* Center stat card content */
+    }
+
+    .stat-card h3 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .target-section h2 {
+      margin-bottom: 1rem;
+      /* Space below target heading */
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      /* Space between icon and text */
+    }
+
+    .target-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      justify-content: center;
+      /* Center buttons if needed */
+    }
+
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      /* Smoother transitions */
+      display: inline-flex;
+      /* Align icon and text */
+      align-items: center;
+      gap: 0.5rem;
+      /* Space between icon and text in button */
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+      /* Slight feedback on hover */
+      transform: translateY(-2px);
+      /* Subtle lift effect */
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* Styling for the empty state */
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      border: 1px dashed #ddd;
+      /* Optional border */
+      border-radius: 10px;
+      background-color: #f9f9f9;
+      /* Light background */
+      margin-top: 1rem;
+      /* Space above empty state */
+    }
+
+    .empty-state i {
+      font-size: 2.5rem;
+      color: var(--secondary);
+      margin-bottom: 1rem;
+      /* Space below icon */
+    }
+
+    .empty-state h3 {
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+
+    .empty-state p {
+      color: #555;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem;
+        /* Reduce padding on mobile */
+      }
+
+      .container {
+        padding: 5rem 1rem 1rem;
+        /* Adjust top padding for header height */
+      }
+
+      .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        /* Reduce gap */
+      }
+
+      .user-info {
+        width: 100%;
+        /* Ensure info takes full width */
+      }
+
+      .target-actions {
+        flex-direction: column;
+        /* Stack buttons on mobile */
+        align-items: center;
+        /* Center stacked buttons */
+      }
+
+      .game-stats {
+        grid-template-columns: 1fr;
+        /* Stack stat cards */
+      }
+
+      .mobile-menu-toggle {
+        display: block;
+        z-index: 101;
+        /* Ensure toggle is above nav */
+        position: relative;
+        /* Needed for z-index */
+      }
+
+      .nav-links {
+        position: fixed;
+        top: 0;
+        /* Align to top */
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        /* Full height */
+        background: var(--dark);
+        flex-direction: column;
+        align-items: center;
+        /* Center links vertically */
+        justify-content: center;
+        /* Center links horizontally */
+        padding: 1rem 0;
+        transform: translateX(100%);
+        /* Start off-screen to the right */
+        transition: transform 0.3s ease-in-out;
+        /* Smooth transition */
+        gap: 2rem;
+        /* More space between links */
+      }
+
+      .nav-links.active {
+        transform: translateX(0);
+        /* Slide in from the right */
+      }
+
+      .nav-links a {
+        font-size: 1.2rem;
+        /* Larger text for mobile menu */
+      }
+
+      /* Adjust header layout when menu is open */
+      /* Optional: Adjust header style when menu is open */
+      /* background-color: rgba(45, 52, 54, 0.9); */
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <a href="index.html" class="logo">Senior<span>Assassin</span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="profile.html" class="active">Profile</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="rules.html">Rules</a>
+      <a href="#" id="logoutBtn">Logout</a>
+    </nav>
+    <button class="mobile-menu-toggle" id="mobileMenuToggle"><i class="fas fa-bars"></i></button>
+  </header>
+
+  <div class="container">
+    <div class="profile-header">
+      <div class="avatar" id="userAvatar">--</div> <!-- Default placeholder -->
+      <div class="user-info">
+        <h1 id="userName">Loading...</h1>
+        <p id="userEmail">Loading...</p>
+        <p>Academy: <span id="userAcademy">Loading...</span></p>
+        <p>Instagram: <span id="userInstagram">Loading...</span></p>
+        <span class="status-badge status-loading" id="userStatus">LOADING</span> <!-- Start with loading status -->
+      </div>
+    </div>
+
+    <div class="game-stats">
+      <div class="stat-card">
+        <h3>Current Rank</h3>
+        <div class="value" id="userRank">#-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Eliminations</h3>
+        <div class="value" id="userKills">0</div>
+      </div>
+    </div>
+
+    <div class="target-section">
+      <h2><i class="fas fa-bullseye"></i> Your Current Target</h2>
+      <!-- Target info will be loaded here dynamically if available -->
+      <!-- Example structure (hidden by default, shown if target exists) -->
+      <div id="targetInfo" style="display: none; margin-bottom: 1.5rem;">
+        <p><strong>Name:</strong> <span id="targetName">Loading...</span></p>
+        <p><strong>Academy:</strong> <span id="targetAcademy">Loading...</span></p>
+        <p><strong>Instagram:</strong> <span id="targetInstagram">Loading...</span></p>
+        <!-- Add other relevant target info if needed -->
+      </div>
+
+      <div class="empty-state" id="target-empty" style="display: block;"> <!-- Show empty state by default -->
+        <i class="fas fa-question-circle"></i>
+        <h3>No Target Assigned Yet</h3>
+        <p>Waiting for admin to assign your next target, or check back later.</p>
+      </div>
+      <div class="target-actions">
+        <button class="btn btn-danger" onclick="window.location.href='report-kill.html'" id="reportKillBtn" disabled>
+          <!-- Disabled initially -->
+          <i class="fas fa-skull"></i> Report Elimination
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Configuration (Keep your existing config)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXIYp8MFRivErUtdMJFaaxq4P1MbG1FgM", // REPLACE WITH YOUR ACTUAL KEY if different
+      authDomain: "vapa-senior-assassin.firebaseapp.com",
+      projectId: "vapa-senior-assassin",
+      storageBucket: "vapa-senior-assassin.appspot.com",
+      messagingSenderId: "455341197665",
+      appId: "1:455341197665:web:63881fd6b7d693a9865d20",
+      measurementId: "G-7KN3VT384R"
+    };
+
+    // Initialize Firebase only if it hasn't been initialized already
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    let playerListener = null; // To hold the Firestore listener
+
+    // DOM Elements
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const navLinks = document.getElementById('navLinks');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const userAvatar = document.getElementById('userAvatar');
+    const userName = document.getElementById('userName');
+    const userEmail = document.getElementById('userEmail');
+    const userAcademy = document.getElementById('userAcademy');
+    const userInstagram = document.getElementById('userInstagram');
+    const userStatus = document.getElementById('userStatus');
+    const userRank = document.getElementById('userRank');
+    const userKills = document.getElementById('userKills');
+    const targetInfoDiv = document.getElementById('targetInfo');
+    const targetEmptyDiv = document.getElementById('target-empty');
+    const targetName = document.getElementById('targetName');
+    const targetAcademy = document.getElementById('targetAcademy');
+    const targetInstagram = document.getElementById('targetInstagram');
+    const reportKillBtn = document.getElementById('reportKillBtn');
+    // --- NEW: Element for report feedback ---
+    const reportFeedbackDiv = document.createElement('div'); // Create a div for feedback
+    reportFeedbackDiv.id = 'reportFeedback';
+    reportFeedbackDiv.style.marginTop = '1rem';
+    reportFeedbackDiv.style.padding = '1rem';
+    reportFeedbackDiv.style.borderRadius = '8px';
+    reportFeedbackDiv.style.textAlign = 'center';
+    reportFeedbackDiv.style.display = 'none'; // Hidden by default
+    // Insert the feedback div into the target section, before the actions
+    const targetSection = document.querySelector('.target-section');
+    const targetActions = document.querySelector('.target-actions');
+    if (targetSection && targetActions) {
+      targetSection.insertBefore(reportFeedbackDiv, targetActions);
+    }
+
+
+    // Mobile Menu Handler (Keep your existing code)
+    if (mobileMenuToggle && navLinks) {
+      mobileMenuToggle.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+        document.body.classList.toggle('menu-open');
+        const icon = mobileMenuToggle.querySelector('i');
+        if (navLinks.classList.contains('active')) {
+          icon.classList.remove('fa-bars');
+          icon.classList.add('fa-times');
+        } else {
+          icon.classList.remove('fa-times');
+          icon.classList.add('fa-bars');
+        }
+      });
+    }
+
+    // --- Auth State Handler with Real-time Listener ---
+    auth.onAuthStateChanged((user) => {
+      // Stop previous listener if user changes or logs out
+      if (playerListener) {
+        try { playerListener(); console.log("Stopped previous player listener."); } catch (e) { console.error("Error stopping listener", e) }
+        playerListener = null;
+      }
+
+      if (user) {
+        console.log("User logged in, attaching profile listener:", user.uid);
+        attachProfileListener(user.uid); // Attach listener for the logged-in user
+        loadRankData(user.uid); // Load rank (doesn't usually need real-time for rank itself)
+      } else {
+        console.log("User logged out, redirecting to login.");
+        setDefaultValues(null); // Clear profile display
+        window.location.href = 'login.html';
+      }
+    });
+
+
+    // --- Attach Firestore Listener for Profile Data ---
+    function attachProfileListener(userId) {
+      const userDocRef = db.collection('players').doc(userId);
+
+      // Detach previous listener if any
+      if (playerListener) {
+        try { playerListener(); console.log("Detached previous profile listener."); } catch (e) { console.error("Error detaching listener:", e); }
+      }
+
+      playerListener = userDocRef.onSnapshot((doc) => {
+        console.log("Profile snapshot received for UID:", userId);
+        if (doc.exists) {
+          const data = doc.data();
+          console.log("Current player data:", data);
+
+          // --- Check Approval Status First ---
+          if (data.approvalStatus === 'pending') {
+            displayPendingApproval();
+            // Still load rank as #-, they aren't ranked yet
+            userRank.textContent = '#-';
+            return; // Stop further processing if pending
+          }
+          if (data.approvalStatus === 'rejected') {
+            displayRejected();
+            // Still load rank as #-, they aren't ranked
+            userRank.textContent = '#-';
+            return; // Stop further processing if rejected
+          }
+
+          // --- Update Profile Display ---
+          updateProfileDisplay(data, auth.currentUser); // Pass user for email
+
+          // --- Update Target Display & Button State ---
+          displayTarget(data);
+
+          // --- Display Report Feedback ---
+          displayReportFeedback(data.lastReportStatus);
+
+          // --- Recalculate and Display Rank ---
+          // Call loadRankData AFTER processing the user's current data
+          // This ensures rank reflects the latest status/kills from the snapshot
+          loadRankData(userId); // <-- ADD THIS CALL HERE
+
+        } else {
+          // Document doesn't exist - Critical error after login/approval check
+          console.error("User document not found in Firestore listener for UID:", userId);
+          setDefaultValues(auth.currentUser);
+          userName.textContent = "Profile Data Missing!";
+          userStatus.textContent = "ERROR";
+          userStatus.className = "status-badge status-danger";
+          targetEmptyDiv.style.display = 'block';
+          targetInfoDiv.style.display = 'none';
+          reportKillBtn.disabled = true;
+          reportFeedbackDiv.style.display = 'none';
+          userRank.textContent = '#ERR'; // Indicate error clearly
+        }
+      }, (error) => {
+        console.error("Error listening to player document:", error);
+        setDefaultValues(auth.currentUser);
+        userName.textContent = "Error Loading Profile";
+        userStatus.textContent = "ERROR";
+        userStatus.className = "status-badge status-danger";
+        // Handle listener error gracefully
+        reportKillBtn.disabled = true;
+        reportFeedbackDiv.style.display = 'none';
+        targetEmptyDiv.style.display = 'block';
+        targetInfoDiv.style.display = 'none';
+        userRank.textContent = '#ERR'; // Indicate error clearly
+      });
+
+      console.log("Attached new profile listener for UID:", userId);
+    }
+
+    // --- Rank Loader (Keep the existing function as is) ---
+    async function loadRankData(userId) {
+      // Make sure the user document actually exists before trying to rank
+      const userDocCheck = await db.collection('players').doc(userId).get();
+      if (!userDocCheck.exists) {
+        console.log(`loadRankData: User doc ${userId} doesn't exist. Cannot determine rank.`);
+        userRank.textContent = '#ERR';
+        return;
+      }
+      const currentUserData = userDocCheck.data();
+
+      // If user is not approved or not active (e.g., eliminated, pending, rejected), they aren't ranked among active players.
+      if (currentUserData.approvalStatus !== 'approved') {
+        console.log(`loadRankData: User ${userId} not approved (${currentUserData.approvalStatus}). Rank is N/A.`);
+        userRank.textContent = '#-'; // Or 'N/A' or similar
+        return;
+      }
+      if (currentUserData.status === 'eliminated') {
+        console.log(`loadRankData: User ${userId} is eliminated. Displaying ELIM.`);
+        userRank.textContent = 'ELIM';
+        return;
+      }
+      if (currentUserData.status !== 'active') {
+        console.log(`loadRankData: User ${userId} is not active (${currentUserData.status}). Rank is N/A.`);
+        userRank.textContent = '#-'; // Or 'N/A' or similar
+        return;
+      }
+
+
+      userRank.textContent = '...'; // Loading indicator
+      console.log(`loadRankData: Calculating rank for active/approved user ${userId}`);
+      try {
+        const snapshot = await db.collection('players')
+          .where('status', '==', 'active')           // Only rank active players
+          .where('approvalStatus', '==', 'approved') // Only rank approved players
+          .orderBy('kills', 'desc')                  // Primary sort: Kills descending
+          .orderBy('fullName', 'asc')                // Secondary sort for ties: Name ascending
+          .get();
+
+        let rank = 0;
+        let found = false;
+        snapshot.forEach((doc, index) => {
+          if (doc.id === userId) {
+            rank = index + 1;
+            found = true;
+          }
+        });
+
+        if (found) {
+          console.log(`loadRankData: User ${userId} found at rank ${rank}`);
+          userRank.textContent = `#${rank}`;
+        } else {
+          // This case should ideally not happen if the checks above passed,
+          // but handle it defensively.
+          console.warn(`loadRankData: Active/approved user ${userId} not found in ranked query results.`);
+          userRank.textContent = '#?'; // Indicate inconsistency
+        }
+      } catch (error) {
+        console.error("Error loading rank data:", error);
+        userRank.textContent = '#ERR'; // Indicate error
+      }
+    }
+
+    // Make sure the initial call in onAuthStateChanged still exists
+    auth.onAuthStateChanged((user) => {
+      // Stop previous listener if user changes or logs out
+      if (playerListener) {
+        try { playerListener(); console.log("Stopped previous player listener."); } catch (e) { console.error("Error stopping listener", e) }
+        playerListener = null;
+      }
+
+      if (user) {
+        console.log("User logged in, attaching profile listener:", user.uid);
+        attachProfileListener(user.uid); // Attach listener for the logged-in user
+        // loadRankData(user.uid); // --> REMOVE initial call here, it's now handled inside the listener
+      } else {
+        console.log("User logged out, redirecting to login.");
+        setDefaultValues(null); // Clear profile display
+        if (window.location.pathname.endsWith('profile.html')) { // Only redirect if on profile page
+          window.location.href = 'login.html';
+        }
+      }
+    });
+
+    // --- Update DOM based on Firestore data ---
+    function updateProfileDisplay(data, user) {
+      const safeData = {
+        fullName: data.fullName || 'Unnamed Player',
+        academy: data.academy || 'N/A',
+        instagram: data.instagram ? `@${data.instagram}` : 'N/A',
+        status: data.status || 'unknown', // Game status (active/eliminated)
+        kills: data.kills || 0
+      };
+
+      userAvatar.textContent = getInitials(safeData.fullName);
+      userName.textContent = safeData.fullName;
+      userEmail.textContent = user?.email || 'No email';
+      userAcademy.textContent = safeData.academy;
+      userInstagram.textContent = safeData.instagram;
+      userKills.textContent = safeData.kills;
+
+      // Update status badge based on game status
+      userStatus.textContent = safeData.status.toUpperCase();
+      userStatus.className = `status-badge status-${safeData.status}`; // e.g., status-active, status-eliminated
+    }
+
+    // --- Display Target Info or Empty/Eliminated State ---
+    function displayTarget(playerData) {
+      if (playerData.status === 'eliminated') {
+        // Player is eliminated
+        targetInfoDiv.style.display = 'none';
+        targetEmptyDiv.style.display = 'block';
+        targetEmptyDiv.innerHTML = `
+                <i class="fas fa-skull-crossbones" style="color: var(--danger);"></i>
+                <h3>Eliminated</h3>
+                <p>You have been eliminated from the game.</p>
+            `;
+        reportKillBtn.disabled = true;
+        reportKillBtn.style.cursor = 'not-allowed';
+        reportKillBtn.style.opacity = '0.6';
+
+      } else if (playerData.status === 'active' && playerData.targetId && playerData.targetName) {
+        // Player is active and has a target
+        targetName.textContent = playerData.targetName;
+        targetAcademy.textContent = playerData.targetAcademy || 'N/A';
+        targetInstagram.textContent = playerData.targetInstagram ? `@${playerData.targetInstagram}` : 'N/A';
+
+        targetInfoDiv.style.display = 'block'; // Show target info
+        targetEmptyDiv.style.display = 'none'; // Hide empty state
+        reportKillBtn.disabled = false; // Enable report button
+        reportKillBtn.style.cursor = 'pointer';
+        reportKillBtn.style.opacity = '1';
+
+      } else if (playerData.status === 'active') {
+        // Player is active but has NO target
+        targetInfoDiv.style.display = 'none'; // Hide target info
+        targetEmptyDiv.style.display = 'block'; // Show empty state
+        targetEmptyDiv.innerHTML = `
+                 <i class="fas fa-question-circle"></i>
+                 <h3>No Target Assigned Yet</h3>
+                 <p>Waiting for admin to assign your next target, or check back later.</p>
+             `;
+        reportKillBtn.disabled = true; // Disable report button
+        reportKillBtn.style.cursor = 'not-allowed';
+        reportKillBtn.style.opacity = '0.6';
+      } else {
+        // Handle other statuses if necessary (e.g., 'pending', 'rejected')
+        targetInfoDiv.style.display = 'none';
+        targetEmptyDiv.style.display = 'block';
+        targetEmptyDiv.innerHTML = `
+                 <i class="fas fa-hourglass-half"></i>
+                 <h3>Status: ${playerData.status}</h3>
+                 <p>Your current status does not allow target assignment.</p>
+             `;
+        reportKillBtn.disabled = true;
+        reportKillBtn.style.cursor = 'not-allowed';
+        reportKillBtn.style.opacity = '0.6';
+      }
+    }
+
+    // --- Display Pending Approval State ---
+    function displayPendingApproval() {
+      setDefaultValues(auth.currentUser); // Show basic info like email
+      userName.textContent = "Account Pending Approval";
+      userStatus.textContent = "PENDING";
+      userStatus.className = "status-badge status-pending"; // Use a yellow/orange style if defined
+
+      targetInfoDiv.style.display = 'none';
+      targetEmptyDiv.style.display = 'block';
+      targetEmptyDiv.innerHTML = `
+             <i class="fas fa-hourglass-start"></i>
+             <h3>Awaiting Approval</h3>
+             <p>Your registration is being reviewed by an admin. Please check back later.</p>
+         `;
+      reportKillBtn.disabled = true;
+      reportFeedbackDiv.style.display = 'none';
+    }
+
+    // --- Display Rejected State ---
+    function displayRejected() {
+      setDefaultValues(auth.currentUser);
+      userName.textContent = "Account Rejected";
+      userStatus.textContent = "REJECTED";
+      userStatus.className = "status-badge status-eliminated"; // Use red style
+
+      targetInfoDiv.style.display = 'none';
+      targetEmptyDiv.style.display = 'block';
+      targetEmptyDiv.innerHTML = `
+             <i class="fas fa-times-circle" style="color: var(--danger);"></i>
+             <h3>Registration Rejected</h3>
+             <p>Your account registration was not approved. Please contact an admin if you believe this is an error.</p>
+         `;
+      reportKillBtn.disabled = true;
+      reportFeedbackDiv.style.display = 'none';
+    }
+
+    // --- Display Feedback based on lastReportStatus ---
+    function displayReportFeedback(lastStatus) {
+      if (!reportFeedbackDiv) return; // Safety check
+
+      if (lastStatus === 'approved') {
+        reportFeedbackDiv.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success);"></i> Your last elimination report was approved!';
+        reportFeedbackDiv.style.backgroundColor = 'rgba(0, 184, 148, 0.1)'; // Light green background
+        reportFeedbackDiv.style.color = 'var(--success)';
+        reportFeedbackDiv.style.display = 'block';
+      } else if (lastStatus === 'rejected') {
+        reportFeedbackDiv.innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i> Your last elimination report was rejected. Please review the rules.';
+        reportFeedbackDiv.style.backgroundColor = 'rgba(214, 48, 49, 0.1)'; // Light red background
+        reportFeedbackDiv.style.color = 'var(--danger)';
+        reportFeedbackDiv.style.display = 'block';
+      } else {
+        // Hide feedback if status is null, pending, or other
+        reportFeedbackDiv.style.display = 'none';
+        reportFeedbackDiv.innerHTML = '';
+      }
+      // Note: This feedback currently persists until the status changes in Firestore.
+      // You could add logic here or in the admin functions to clear the lastReportStatus
+      // after a certain time or condition if desired. For now, it reflects the last review outcome.
+    }
+
+
+    // --- Rank Loader (Keep your existing function, maybe add error handling) ---
+    async function loadRankData(userId) {
+      userRank.textContent = '...'; // Loading indicator
+      try {
+        const snapshot = await db.collection('players')
+          .where('status', '==', 'active') // Only rank active players
+          .where('approvalStatus', '==', 'approved') // Only rank approved players
+          .orderBy('kills', 'desc')
+          .orderBy('fullName', 'asc') // Secondary sort for ties
+          .get();
+
+        let rank = 0;
+        let found = false;
+        snapshot.forEach((doc, index) => {
+          if (doc.id === userId) {
+            rank = index + 1;
+            found = true;
+          }
+        });
+
+        if (found) {
+          userRank.textContent = `#${rank}`;
+        } else {
+          // Check if eliminated
+          const userDoc = await db.collection('players').doc(userId).get();
+          if (userDoc.exists && userDoc.data().status === 'eliminated') {
+            userRank.textContent = 'ELIM';
+          } else {
+            userRank.textContent = '#-'; // Not found or inactive
+          }
+        }
+      } catch (error) {
+        console.error("Error loading rank data:", error);
+        userRank.textContent = '#ERR'; // Indicate error
+      }
+    }
+
+    // --- Helper Function: Set Default Values ---
+    function setDefaultValues(user) {
+      userAvatar.textContent = user?.email ? user.email[0].toUpperCase() : '?';
+      userName.textContent = 'Loading...';
+      userEmail.textContent = user?.email || 'Loading...';
+      userAcademy.textContent = '...';
+      userInstagram.textContent = '...';
+      userStatus.textContent = 'LOADING';
+      userStatus.className = 'status-badge status-loading';
+      userKills.textContent = '-';
+      userRank.textContent = '#-';
+      // Don't call displayTarget here, let the listener handle it.
+      targetInfoDiv.style.display = 'none';
+      targetEmptyDiv.style.display = 'block';
+      targetEmptyDiv.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Loading player data...`; // Loading state for target area
+      reportKillBtn.disabled = true;
+      if (reportFeedbackDiv) reportFeedbackDiv.style.display = 'none';
+    }
+
+    // --- Helper Function: Get Initials --- (Keep your existing function)
+    function getInitials(name) {
+      if (!name || typeof name !== 'string' || name.trim() === '') return '??';
+      try {
+        const parts = name.trim().split(' ').filter(part => part); // Filter empty parts
+        if (parts.length === 0) return '??';
+        if (parts.length === 1) {
+          return parts[0].substring(0, 2).toUpperCase();
+        }
+        return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase(); // First letter of first two parts
+      } catch (e) {
+        console.error("Error getting initials:", e);
+        return '??';
+      }
+    }
+
+
+    // --- Logout Handler ---
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Stop listener BEFORE signing out
+        if (playerListener) {
+          try { playerListener(); console.log("Stopped player listener on logout click."); } catch (e) { console.error("Error stopping listener", e) }
+          playerListener = null;
+        }
+        auth.signOut().then(() => {
+          console.log('User signed out successfully.');
+          window.location.href = 'index.html';
+        }).catch((error) => {
+          console.error('Logout error:', error);
+          alert('Logout failed. Please try again.');
+          // Still try to redirect
+          window.location.href = 'index.html';
+        });
+      });
+    }
+
+    const bodyElement = document.body;
+    const primaryColor = getComputedStyle(bodyElement).getPropertyValue('--primary').trim() || '#32b1b1';
+    const secondaryColor = getComputedStyle(bodyElement).getPropertyValue('--secondary').trim() || '#000000';
+
+    const SMOOTHING_FACTOR = 0.08;
+    const GRADIENT_END_PRIMARY = '15%'; // Primary color fully visible up to 15% radius
+    const GRADIENT_START_SECONDARY = '80%'; // Secondary color starts becoming dominant from 80% radius
+
+    let targetMouseX = window.innerWidth / 2;
+    let targetMouseY = window.innerHeight / 2;
+    let currentGradientX = window.innerWidth / 2;
+    let currentGradientY = window.innerHeight / 2;
+    let animationFrameId = null;
+
+    function updateTargetPosition(event) {
+      targetMouseX = event.clientX;
+      targetMouseY = event.clientY;
+      if (!animationFrameId) {
+        startAnimationLoop();
+      }
+    }
+
+    function animateGradient() {
+      const dx = targetMouseX - currentGradientX;
+      const dy = targetMouseY - currentGradientY;
+
+      currentGradientX += dx * SMOOTHING_FACTOR;
+      currentGradientY += dy * SMOOTHING_FACTOR;
+
+      const xPercent = (currentGradientX / window.innerWidth) * 100;
+      const yPercent = (currentGradientY / window.innerHeight) * 100;
+
+      const gradientStyle = `radial-gradient(
+            circle at ${xPercent}% ${yPercent}%,
+            ${primaryColor} ${GRADIENT_END_PRIMARY},
+            ${secondaryColor} ${GRADIENT_START_SECONDARY}
+        )`;
+
+      bodyElement.style.background = gradientStyle;
+
+      if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      } else {
+        animationFrameId = null;
+      }
+    }
+
+    function startAnimationLoop() {
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      }
+    }
+
+    document.addEventListener('mousemove', updateTargetPosition);
+
+    const initialXPercent = 50;
+    const initialYPercent = 50;
+    const initialGradient = `radial-gradient(circle at ${initialXPercent}% ${initialYPercent}%, ${primaryColor} ${GRADIENT_END_PRIMARY}, ${secondaryColor} ${GRADIENT_START_SECONDARY})`;
+    bodyElement.style.background = initialGradient;
+    startAnimationLoop();
+
+  </script>
+</body>
+
+</html>

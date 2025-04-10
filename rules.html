@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Rules | Senior Assassin</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #32b1b1;
+      --secondary: #000000;
+      --accent: #ffffff;
+      --dark: #333333;
+      --light: #f5f5f5;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: var(--secondary);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background-color: rgba(45, 52, 54, 0.7);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--light);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--light);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -5px;
+      left: 0;
+      background-color: var(--accent);
+      transition: width 0.3s ease;
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-links a.active {
+      color: var(--accent);
+    }
+
+    .nav-links a.active::after {
+      width: 100%;
+    }
+
+    .nav-links a.cta-button {
+      background: var(--accent);
+      color: var(--dark);
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+    }
+
+    .nav-links a.cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(253, 121, 168, 0.4);
+    }
+
+    .nav-links a.cta-button::after {
+      display: none;
+    }
+
+    #mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 6rem 2rem 2rem;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .page-header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+
+    .rules-container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgb(255, 255, 255);
+      padding: 2rem;
+    }
+
+    .rule-item {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      border-left: 3px solid var(--secondary);
+    }
+
+    .rule-item h3 {
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+
+    .rule-item p {
+      color: #636e72;
+    }
+
+    @media (max-width: 768px) {
+      #mobile-menu-toggle {
+        display: block;
+      }
+
+      .nav-links {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        width: 100%;
+        background: var(--dark);
+        flex-direction: column;
+        padding: 1rem 0;
+        gap: 1rem;
+        transform: translateY(-150%);
+        transition: transform 0.3s ease;
+      }
+
+      .nav-links.active {
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <button id="mobile-menu-toggle">
+      <i class="fas fa-bars"></i>
+    </button>
+    <a href="index.html" class="logo">Senior<span>Assassin</span></a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html">Home</a>
+      <a href="rules.html" class="active">Rules</a> <!-- IMPORTANT: Ensure 'active' is on Rules -->
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="login.html" class="cta-button">Login</a> <!-- Note: id="auth-button" is REMOVED -->
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="page-header">
+      <h1></i> Game Rules</h1>
+      <p>Official rules for Senior Assassin. Violations may result in disqualification.</p>
+    </div>
+  
+    <div class="rules-container">
+      <div class="rule-item">
+        <h3>1. Registration</h3>
+        <p>Only verified seniors may participate. Accounts will be approved after verification and after the $5 entry fee is paid. The last day to register is April 27 at 11:59 PM PST.</p>
+        <p>Payment accepted via Cash, Venmo, or CashApp. Message the Instagram account (@vapaseniorassassin) for payment instructions.</p>
+        <p>If you forgot your password, message the account for help.</p>
+      </div>
+  
+      <div class="rule-item">
+        <h3>2. Game Start</h3>
+        <p>A practice round runs from April 21–25. The official game begins on April 26.</p>
+      </div>
+  
+      <div class="rule-item">
+        <h3>3. Safe Zones</h3>
+        <p>Eliminations are not allowed inside school buildings, religious buildings, or during prom and graduation events.</p>
+      </div>
+  
+      <div class="rule-item">
+        <h3>4. Approved Weapons</h3>
+        <p>Only the following are allowed: spray bottles, water guns (non-motorized), and water balloons. No other items may be used.</p>
+        <p>No physical contact is allowed at any time.</p>
+      </div>
+  
+      <div class="rule-item">
+        <h3>5. Goggle Rule</h3>
+        <p>Wearing goggles protects you from elimination. Goggles must be securely worn on the head and may not be altered in any way.</p>
+      </div>
+  
+      <div class="rule-item">
+        <h3>6. Elimination Rules</h3>
+        <p>All eliminations must be filmed and submitted to the Instagram account. No video = no kill.</p>
+        <p>Eliminations must be reported within 24 hours to count.</p>
+      </div>
+  
+      <div class="rule-item">
+        <h3>7. Target Updates</h3>
+        <p>New targets are assigned every Wednesday and Saturday (midday).</p>
+      </div>
+  
+      <div class="rule-item">
+        <h3>8. Prizes</h3>
+        <p>Winnings are split among the top three players:</p>
+        <ul>
+          <li>1st Place: 60%</li>
+          <li>2nd Place: 30%</li>
+          <li>3rd Place: 10%</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXIYp8MFRivErUtdMJFaaxq4P1MbG1FgM",
+      authDomain: "vapa-senior-assassin.firebaseapp.com",
+      projectId: "vapa-senior-assassin",
+      storageBucket: "vapa-senior-assassin.appspot.com",
+      messagingSenderId: "455341197665",
+      appId: "1:455341197665:web:63881fd6b7d693a9865d20",
+      measurementId: "G-7KN3VT384R"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Mobile menu toggle
+    document.getElementById('mobile-menu-toggle').addEventListener('click', () => {
+      document.getElementById('nav-links').classList.toggle('active');
+    });
+
+    // Auth state management
+    // Auth state management
+    auth.onAuthStateChanged(user => {
+      // Find the button using its class, like in index.html
+      const authButton = document.querySelector('.nav-links a.cta-button');
+      if (!authButton) return; // Added safety check
+
+      if (user) {
+        authButton.textContent = 'Profile';
+        authButton.href = 'profile.html';
+
+        db.collection('admins').doc(user.uid).get().then(doc => {
+          if (doc.exists) {
+            const rulesContainer = document.querySelector('.rules-container');
+          }
+        });
+      } else {
+        authButton.textContent = 'Login';
+        authButton.href = 'login.html';
+        // Optionally remove admin note if user logs out
+        const existingAdminNote = document.querySelector('.rules-container .admin-note');
+        if (existingAdminNote) {
+          existingAdminNote.remove();
+        }
+      }
+    });
+
+    const bodyElement = document.body;
+    const primaryColor = getComputedStyle(bodyElement).getPropertyValue('--primary').trim() || '#32b1b1';
+    const secondaryColor = getComputedStyle(bodyElement).getPropertyValue('--secondary').trim() || '#000000';
+
+    const SMOOTHING_FACTOR = 0.08;
+    const GRADIENT_END_PRIMARY = '15%'; // Primary color fully visible up to 15% radius
+    const GRADIENT_START_SECONDARY = '80%'; // Secondary color starts becoming dominant from 80% radius
+
+    let targetMouseX = window.innerWidth / 2;
+    let targetMouseY = window.innerHeight / 2;
+    let currentGradientX = window.innerWidth / 2;
+    let currentGradientY = window.innerHeight / 2;
+    let animationFrameId = null;
+
+    function updateTargetPosition(event) {
+      targetMouseX = event.clientX;
+      targetMouseY = event.clientY;
+      if (!animationFrameId) {
+        startAnimationLoop();
+      }
+    }
+
+    function animateGradient() {
+      const dx = targetMouseX - currentGradientX;
+      const dy = targetMouseY - currentGradientY;
+
+      currentGradientX += dx * SMOOTHING_FACTOR;
+      currentGradientY += dy * SMOOTHING_FACTOR;
+
+      const xPercent = (currentGradientX / window.innerWidth) * 100;
+      const yPercent = (currentGradientY / window.innerHeight) * 100;
+
+      const gradientStyle = `radial-gradient(
+            circle at ${xPercent}% ${yPercent}%,
+            ${primaryColor} ${GRADIENT_END_PRIMARY},
+            ${secondaryColor} ${GRADIENT_START_SECONDARY}
+        )`;
+
+      bodyElement.style.background = gradientStyle;
+
+      if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      } else {
+        animationFrameId = null;
+      }
+    }
+
+    function startAnimationLoop() {
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      }
+    }
+
+    document.addEventListener('mousemove', updateTargetPosition);
+
+    const initialXPercent = 50;
+    const initialYPercent = 50;
+    const initialGradient = `radial-gradient(circle at ${initialXPercent}% ${initialYPercent}%, ${primaryColor} ${GRADIENT_END_PRIMARY}, ${secondaryColor} ${GRADIENT_START_SECONDARY})`;
+    bodyElement.style.background = initialGradient;
+    startAnimationLoop();
+
+  </script>
+</body>
+
+</html>

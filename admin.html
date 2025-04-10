@@ -1,0 +1,2986 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | Senior Assassin</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6c5ce7;
+      --secondary: #a29bfe;
+      --accent: #fd79a8;
+      --dark: #2d3436;
+      --light: #f5f6fa;
+      --success: #00b894;
+      --danger: #d63031;
+      --warning: #fdcb6e;
+    }
+
+    th,
+    td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      vertical-align: middle;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: #f8f9fa;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: white;
+      padding: 1.5rem;
+      position: fixed;
+      height: 100vh;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .admin-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.8rem;
+    }
+
+    .nav-menu {
+      list-style: none;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 0.8rem 1rem;
+      color: var(--dark);
+      text-decoration: none;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      background: rgba(108, 92, 231, 0.1);
+      color: var(--primary);
+    }
+
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 2rem;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card h3 {
+      font-size: 1rem;
+      color: #636e72;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-sm {
+      padding: 0.3rem 0.8rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5549d6;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c0392b;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #00a884;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: var(--dark);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: rgba(0, 184, 148, 0.1);
+      color: var(--success);
+    }
+
+    .status-pending {
+      background: rgba(253, 203, 110, 0.1);
+      color: var(--warning);
+    }
+
+    .status-eliminated {
+      background: rgba(214, 48, 49, 0.1);
+      color: var(--danger);
+    }
+
+    .loading-state {
+      padding: 2rem;
+      text-align: center;
+      color: #636e72;
+    }
+
+    .loading-state i {
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Evidence Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal-content {
+      max-width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      background: white;
+      border-radius: 10px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--danger);
+      color: white;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .evidence-item {
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .evidence-item img,
+    .evidence-item video {
+      width: 100%;
+      display: block;
+    }
+
+    .evidence-info {
+      padding: 1rem;
+      background: #f8f9fa;
+    }
+
+    .report-details {
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-row {
+      display: flex;
+      margin-bottom: 0.5rem;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      width: 120px;
+      color: #636e72;
+    }
+
+    .detail-value {
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="admin-avatar" id="adminAvatar">AD</div>
+      <div class="logo">Admin<span>Panel</span></div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="#" class="nav-link active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i>
+          Dashboard</a></li>
+      <li><a href="#" class="nav-link" data-section="players"><i class="fas fa-users"></i> Players</a></li>
+      <li><a href="#" class="nav-link" data-section="targets"><i class="fas fa-bullseye"></i> Targets</a></li>
+      <li><a href="#" class="nav-link" data-section="reports"><i class="fas fa-flag"></i> Kill Reports</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="header">
+      <h1 id="sectionTitle">Dashboard</h1>
+      <button class="btn btn-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard-section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h3>Total Players</h3>
+          <div class="value" id="totalPlayers">0</div>
+        </div>
+        <div class="stat-card">
+          <h3>Active Players</h3>
+          <div class="value" id="activePlayers">0</div>
+        </div>
+        <div class="stat-card">
+          <h3>Eliminations</h3>
+          <div class="value" id="totalEliminations">0</div>
+        </div>
+        <div class="stat-card">
+          <h3>Pending Reports</h3>
+          <div class="value" id="pendingReports">0</div>
+        </div>
+      </div>
+      <div class="table-container">
+        <h2 style="padding: 1rem 1rem 0;">Recent Activity</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Action</th>
+              <th>Time</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recentActivity">
+            <tr>
+              <td colspan="4" class="loading-state">
+                <i class="fas fa-spinner fa-spin"></i> Loading activity...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Players Section -->
+    <div id="players-section" style="display:none">
+      <div class="table-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem;">
+          <h2>All Players</h2>
+          <button class="btn btn-primary" onclick="showAddPlayerModal()"><i class="fas fa-plus"></i> Add Player</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Kills</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="playersTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Targets Section -->
+    <div id="targets-section" style="display:none">
+      <div class="table-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem;">
+          <h2>Target Assignments</h2>
+          <button class="btn btn-primary" onclick="assignRandomTargets()"><i class="fas fa-random"></i> Assign
+            Targets</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Target</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="targetsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Reports Section -->
+    <div id="reports-section" style="display:none">
+      <div class="table-container">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem;">
+          <h2>Pending Kill Reports</h2>
+          <div class="empty-state" id="reports-empty" style="display: none;">
+            <div style="text-align: center; padding: 2rem;">
+              <i class="fas fa-flag" style="font-size: 2.5rem; color: #fd79a8;"></i>
+              <h3>No Pending Reports</h3>
+              <p>When players submit elimination reports, they'll appear here</p>
+            </div>
+          </div>
+          <div class="filter-controls">
+            <button class="btn btn-sm btn-primary" onclick="filterReports('all')">All</button>
+            <button class="btn btn-sm" onclick="filterReports('pending')">Pending</button>
+            <button class="btn btn-sm" onclick="filterReports('approved')">Approved</button>
+            <button class="btn btn-sm" onclick="filterReports('rejected')">Rejected</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Reporter</th>
+              <th>Target</th>
+              <th>Time</th>
+              <th>Evidence</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="reportsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Evidence Modal (hidden by default) -->
+  <div id="evidenceModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <button class="close-modal" onclick="closeModal()">&times;</button>
+      <h2>Kill Report Evidence</h2>
+
+      <div class="report-details" id="reportDetails">
+        <!-- Details will be populated by JavaScript -->
+      </div>
+
+      <div class="evidence-grid" id="evidenceGrid">
+        <!-- Evidence items will be populated by JavaScript -->
+      </div>
+
+      <div class="action-buttons" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+        <button class="btn btn-success" id="approveBtn" onclick="approveReport()">
+          <i class="fas fa-check"></i> Approve
+        </button>
+        <button class="btn btn-danger" id="rejectBtn" onclick="rejectReport()">
+          <i class="fas fa-times"></i> Reject
+        </button>
+        <button class="btn" onclick="closeModal()">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    function showAddPlayerModal() {
+      document.getElementById('addPlayerForm').reset(); // Clear form
+      document.getElementById('addPlayerModal').style.display = 'flex';
+    }
+
+    function hideAddPlayerModal() {
+      document.getElementById('addPlayerModal').style.display = 'none';
+    }
+
+    async function saveNewPlayer(event) {
+      event.preventDefault(); // Prevent default form submission
+      const fullName = document.getElementById('addFullName').value.trim();
+      const email = document.getElementById('addEmail').value.trim();
+      const instagram = document.getElementById('addInstagram').value.trim();
+      const academy = document.getElementById('addAcademy').value.trim();
+
+      if (!fullName || !email) {
+        alert('Full Name and Email are required.');
+        return;
+      }
+
+      // Optional: Basic email format check
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+
+      console.log(`Attempting to add player: ${fullName} (${email})`);
+      const addButton = event.target; // Get the button that was clicked
+      addButton.disabled = true; // Disable button during operation
+      addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      const playerRef = db.collection('players').doc(); // Generate ID upfront
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc();
+      const batch = db.batch();
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        // Create Player Document
+        // NOTE: This adds ONLY the Firestore record. It does NOT create a Firebase Auth user.
+        // Manually added players might not be able to log in unless their email matches an existing Auth account.
+        batch.set(playerRef, {
+          uid: playerRef.id, // Store the generated ID also as uid field if needed elsewhere
+          fullName: fullName,
+          email: email,
+          instagram: instagram || null,
+          academy: academy || null,
+          status: 'active', // Default to active
+          approvalStatus: 'approved', // Manually added are pre-approved
+          kills: 0,
+          targetId: null, // No target initially
+          targetName: null,
+          createdAt: timestamp,
+          // Add any other default fields your players have
+        });
+
+        // Update Stats
+        batch.set(statsRef, {
+          totalPlayers: firebase.firestore.FieldValue.increment(1),
+          activePlayers: firebase.firestore.FieldValue.increment(1)
+        }, { merge: true });
+
+        // Log Activity
+        batch.set(activityRef, {
+          type: 'player-added-admin',
+          adminId: currentAdmin?.uid || 'unknown',
+          playerId: playerRef.id,
+          playerName: fullName,
+          timestamp: timestamp,
+          status: 'completed'
+        });
+
+        await batch.commit();
+        alert(`Player "${fullName}" added successfully!`);
+        hideAddPlayerModal();
+
+      } catch (error) {
+        console.error("Error adding player:", error);
+        alert(`Failed to add player: ${error.message}`);
+      } finally {
+        // Re-enable button
+        addButton.disabled = false;
+        addButton.innerHTML = 'Save Player';
+      }
+    }
+
+    // --- Edit Player Modal Functions ---
+    async function showEditPlayerModal(playerId) {
+      console.log(`Editing player: ${playerId}`);
+      const modal = document.getElementById('editPlayerModal');
+      const form = document.getElementById('editPlayerForm');
+      form.reset(); // Clear previous data
+
+      try {
+        const playerDoc = await db.collection('players').doc(playerId).get();
+        if (!playerDoc.exists) {
+          alert('Player not found!');
+          return;
+        }
+        const player = playerDoc.data();
+
+        // Populate the form
+        document.getElementById('editPlayerId').value = playerId;
+        document.getElementById('editFullName').value = player.fullName || '';
+        document.getElementById('editEmail').value = player.email || '';
+        document.getElementById('editInstagram').value = player.instagram || '';
+        document.getElementById('editAcademy').value = player.academy || '';
+        document.getElementById('editStatus').value = player.status || 'active'; // Set dropdown
+        document.getElementById('editKills').value = player.kills || 0;
+
+        modal.style.display = 'flex'; // Show modal
+
+      } catch (error) {
+        console.error("Error fetching player for edit:", error);
+        alert(`Failed to load player data: ${error.message}`);
+      }
+    }
+
+    function hideEditPlayerModal() {
+      document.getElementById('editPlayerModal').style.display = 'none';
+    }
+
+    async function updatePlayer(event) {
+      event.preventDefault();
+      const playerId = document.getElementById('editPlayerId').value;
+      if (!playerId) {
+        alert('Player ID missing. Cannot update.');
+        return;
+      }
+
+      // Get updated values
+      const updatedData = {
+        fullName: document.getElementById('editFullName').value.trim(),
+        // email: document.getElementById('editEmail').value.trim(), // Usually don't allow email change easily
+        instagram: document.getElementById('editInstagram').value.trim() || null,
+        academy: document.getElementById('editAcademy').value.trim() || null,
+        status: document.getElementById('editStatus').value,
+        kills: parseInt(document.getElementById('editKills').value, 10) || 0,
+        // Add other editable fields
+      };
+
+      if (!updatedData.fullName) {
+        alert('Full Name cannot be empty.');
+        return;
+      }
+      if (isNaN(updatedData.kills) || updatedData.kills < 0) {
+        alert('Kills must be a non-negative number.');
+        return;
+      }
+
+
+      console.log(`Attempting to update player: ${playerId}`);
+      const updateButton = event.target;
+      updateButton.disabled = true;
+      updateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+      const playerRef = db.collection('players').doc(playerId);
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc();
+      const batch = db.batch();
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        // --- IMPORTANT: Check for status change impact on stats ---
+        const playerDocBefore = await playerRef.get();
+        if (!playerDocBefore.exists) throw new Error("Player disappeared before update!");
+        const statusBefore = playerDocBefore.data().status;
+        const statusAfter = updatedData.status;
+
+        let activePlayerChange = 0;
+        if (statusBefore === 'active' && statusAfter !== 'active') {
+          activePlayerChange = -1; // Became inactive/eliminated
+        } else if (statusBefore !== 'active' && statusAfter === 'active') {
+          activePlayerChange = 1;  // Became active
+        }
+        // (Assuming totalPlayers count doesn't change on edit, only add/delete/reject)
+
+        // Update Player Document
+        batch.update(playerRef, { ...updatedData, updatedAt: timestamp }); // Spread updated data
+
+        // Update Stats if status changed
+        if (activePlayerChange !== 0) {
+          batch.set(statsRef, {
+            activePlayers: firebase.firestore.FieldValue.increment(activePlayerChange)
+          }, { merge: true });
+        }
+
+        // Log Activity
+        batch.set(activityRef, {
+          type: 'player-edited-admin',
+          adminId: currentAdmin?.uid || 'unknown',
+          playerId: playerId,
+          playerName: updatedData.fullName, // Use updated name
+          changes: updatedData, // Log what was changed
+          statusChange: { from: statusBefore, to: statusAfter }, // Log status change details
+          timestamp: timestamp,
+          status: 'completed'
+        });
+
+        await batch.commit();
+        alert(`Player "${updatedData.fullName}" updated successfully!`);
+        hideEditPlayerModal();
+
+      } catch (error) {
+        console.error("Error updating player:", error);
+        alert(`Failed to update player: ${error.message}`);
+      } finally {
+        updateButton.disabled = false;
+        updateButton.innerHTML = 'Update Player';
+      }
+    }
+
+
+    // --- Delete Player Function ---
+    async function deletePlayer(playerId, playerName) {
+      // Extra confirmation due to destructive nature
+      if (!confirm(`ARE YOU ABSOLUTELY SURE you want to delete player "${playerName}" (${playerId})?\n\nThis action is IRREVERSIBLE and will remove their data entirely. Consider 'Eliminating' them first if they were part of the game.`)) {
+        return;
+      }
+      // Second confirmation maybe?
+      if (!confirm(`FINAL CONFIRMATION: Delete "${playerName}"? All associated data will be lost.`)) {
+        return;
+      }
+
+
+      console.log(`Attempting to delete player: ${playerName} (${playerId})`);
+      // Optional: Disable the button visually if possible while processing
+
+      const playerRef = db.collection('players').doc(playerId);
+      const targetAssignmentRef = db.collection('targets').doc(playerId); // Their target assignment
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc();
+      const batch = db.batch();
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        // 1. Get Player Data (to adjust stats correctly)
+        const playerDoc = await playerRef.get();
+        if (!playerDoc.exists) {
+          alert("Player already deleted or not found.");
+          return; // Nothing more to do
+        }
+        const playerData = playerDoc.data();
+        const wasActive = playerData.status === 'active';
+        const wasApproved = playerData.approvalStatus === 'approved';
+
+        // 2. Delete Player Document
+        batch.delete(playerRef);
+
+        // 3. Delete Target Assignment Document (if it exists)
+        // We don't NEED to get it first, just attempt deletion.
+        batch.delete(targetAssignmentRef);
+
+        // 4. Update Stats
+        let totalDecrement = -1; // Always decrement total count if they existed
+        let activeDecrement = (wasActive && wasApproved) ? -1 : 0; // Only decrement active if they were approved & active
+
+        // Adjust stats if player was rejected (they never counted towards active, only total)
+        if (playerData.approvalStatus === 'rejected') {
+          // They were already removed from total count during rejection, so don't decrement again
+          totalDecrement = 0;
+          activeDecrement = 0;
+        }
+        // Adjust stats if player was pending (only decrement total)
+        else if (playerData.approvalStatus === 'pending') {
+          totalDecrement = -1; // Decrement total
+          activeDecrement = 0; // Never counted as active
+        }
+
+
+        batch.set(statsRef, {
+          totalPlayers: firebase.firestore.FieldValue.increment(totalDecrement),
+          activePlayers: firebase.firestore.FieldValue.increment(activeDecrement)
+          // totalEliminations doesn't change on delete
+        }, { merge: true });
+
+        // 5. Log Activity
+        batch.set(activityRef, {
+          type: 'player-deleted-admin',
+          adminId: currentAdmin?.uid || 'unknown',
+          playerId: playerId,
+          playerName: playerName, // Use name passed to function
+          previousStatus: playerData.status, // Log their last status
+          previousApprovalStatus: playerData.approvalStatus,
+          timestamp: timestamp,
+          status: 'completed'
+        });
+
+        // --- 6. Handle Target Chain (Complex Part) ---
+        // Find who was targeting the deleted player. Their target needs to be cleared or reassigned.
+        console.warn(`Deleting player ${playerName}. Checking if anyone was targeting them...`);
+        const huntersSnap = await db.collection('targets').where('targetId', '==', playerId).get();
+        if (!huntersSnap.empty) {
+          huntersSnap.forEach(hunterDoc => {
+            const hunterId = hunterDoc.id;
+            const hunterName = hunterDoc.data().playerName || hunterId;
+            console.log(`Player ${hunterName} (${hunterId}) was targeting the deleted player ${playerName}. Clearing their target.`);
+            // For simplicity, just clear the hunter's target. Reassignment is too complex here.
+            const hunterTargetRef = db.collection('targets').doc(hunterId);
+            const hunterPlayerRef = db.collection('players').doc(hunterId);
+            batch.update(hunterTargetRef, { targetId: null, targetName: 'None (Target Deleted)', status: 'inactive' });
+            batch.update(hunterPlayerRef, { targetId: null, targetName: 'None (Target Deleted)' }); // Also update player doc
+
+            // Log this specific target clearing
+            const clearLogRef = db.collection('activity').doc();
+            batch.set(clearLogRef, {
+              type: 'target-cleared-admin-delete',
+              adminId: currentAdmin?.uid || 'system',
+              playerId: hunterId, // The hunter
+              playerName: hunterName,
+              deletedTargetId: playerId,
+              deletedTargetName: playerName,
+              timestamp: timestamp,
+              status: 'completed'
+            });
+          });
+        } else {
+          console.log(`No active players were targeting the deleted player ${playerName}.`);
+        }
+
+        // --- End Target Chain Handling ---
+
+
+        // 7. Commit Batch
+        await batch.commit();
+        alert(`Player "${playerName}" deleted successfully!`);
+        // The listener should automatically remove the row from the table.
+
+      } catch (error) {
+        console.error(`Error deleting player ${playerId}:`, error);
+        alert(`Failed to delete player: ${error.message}`);
+      } finally {
+        // Re-enable button if needed
+      }
+    }
+
+
+    // --- Eliminate Player Function ---
+    async function eliminatePlayer(playerId, playerName) {
+      if (!confirm(`Are you sure you want to MANUALLY ELIMINATE "${playerName}" (${playerId})?\n\nThis will mark them as eliminated, remove them from active play, and attempt to reassign their target.`)) {
+        return;
+      }
+      console.log(`Attempting to manually eliminate player: ${playerName} (${playerId})`);
+
+      const playerRef = db.collection('players').doc(playerId);
+      const targetAssignmentRef = db.collection('targets').doc(playerId); // The assignment doc FOR the player being eliminated
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc(); // Log elimination
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      // We need to find who was targeting THIS player, to give THEM the new target.
+      // This is complex and requires querying the 'targets' collection again.
+      // Let's use a transaction for atomicity.
+
+      try {
+        const resultData = await db.runTransaction(async (transaction) => {
+          // 1. Get Player being eliminated
+          const playerDoc = await transaction.get(playerRef);
+          if (!playerDoc.exists) throw new Error("Player to eliminate not found.");
+          const playerData = playerDoc.data();
+
+          // Check if already eliminated or not active/approved
+          if (playerData.status !== 'active' || playerData.approvalStatus !== 'approved') {
+            throw new Error(`Player "${playerName}" is not currently active and approved (Status: ${playerData.status}, Approval: ${playerData.approvalStatus}). Cannot eliminate.`);
+          }
+
+          // 2. Get the target assignment details FOR the player being eliminated
+          // We need THEIR targetId to pass it on.
+          const eliminatedTargetAssignmentDoc = await transaction.get(targetAssignmentRef);
+          const eliminatedAssignmentData = eliminatedTargetAssignmentDoc.exists ? eliminatedTargetAssignmentDoc.data() : {};
+          const nextTargetId = eliminatedAssignmentData.targetId || null;
+          const nextTargetName = eliminatedAssignmentData.targetName || null;
+          const nextTargetAcademy = eliminatedAssignmentData.targetAcademy || null;
+          const nextTargetInstagram = eliminatedAssignmentData.targetInstagram || null;
+
+          console.log(`Player ${playerName} had target: ${nextTargetName || 'None'}`);
+
+          // 3. Find who was targeting the player being eliminated (the 'hunter')
+          // This query needs to happen OUTSIDE the main transaction logic if possible,
+          // but we need the hunter's ID to update within the transaction. This is tricky.
+          // Let's fetch the hunter's ID BEFORE starting the transaction for simplicity,
+          // although this introduces a small race condition possibility.
+          // A more robust way might involve Cloud Functions.
+
+          let hunterId = null;
+          let hunterName = null;
+          let hunterTargetAssignmentRef = null; // Ref to hunter's entry in 'targets'
+          let hunterPlayerRef = null; // Ref to hunter's entry in 'players'
+
+          const huntersSnap = await db.collection('targets').where('targetId', '==', playerId).limit(1).get();
+          if (!huntersSnap.empty) {
+            const hunterDoc = huntersSnap.docs[0];
+            hunterId = hunterDoc.id;
+            hunterName = hunterDoc.data().playerName || hunterId;
+            hunterTargetAssignmentRef = db.collection('targets').doc(hunterId); // Get ref
+            hunterPlayerRef = db.collection('players').doc(hunterId); // Get ref
+            console.log(`Found hunter: ${hunterName} (${hunterId}). They will receive target ${nextTargetName || 'None'}.`);
+          } else {
+            console.log(`No active player found targeting ${playerName}. Target will not be reassigned.`);
+          }
+
+
+          // --- Resume Transaction ---
+
+          // 4. Update Eliminated Player's Status in 'players' collection
+          transaction.update(playerRef, {
+            status: 'eliminated',
+            eliminatedByAdmin: true, // Mark as admin action
+            eliminatedAt: timestamp,
+            targetId: null, // Clear their target info
+            targetName: null,
+            targetAcademy: null,
+            targetInstagram: null
+          });
+
+          // 5. Update Eliminated Player's Status in 'targets' collection
+          transaction.set(targetAssignmentRef, { // Use set+merge
+            status: 'eliminated',
+            targetId: null, // Clear target here too
+            targetName: null,
+            targetAcademy: null,
+            targetInstagram: null,
+            eliminatedAt: timestamp
+          }, { merge: true });
+
+
+          // 6. Update Hunter's Target (if a hunter was found)
+          if (hunterId && hunterTargetAssignmentRef && hunterPlayerRef) {
+            // Update hunter's document in 'targets' collection
+            transaction.update(hunterTargetAssignmentRef, {
+              targetId: nextTargetId,
+              targetName: nextTargetName,
+              targetAcademy: nextTargetAcademy,
+              targetInstagram: nextTargetInstagram,
+              status: nextTargetId ? 'active' : 'inactive', // If next target is null, hunter is inactive
+              assignedAt: timestamp // Mark when new target was assigned
+            });
+            // Update hunter's document in 'players' collection
+            transaction.update(hunterPlayerRef, {
+              targetId: nextTargetId,
+              targetName: nextTargetName,
+              targetAcademy: nextTargetAcademy,
+              targetInstagram: nextTargetInstagram
+            });
+          }
+
+
+          // 7. Update Global Stats
+          transaction.set(statsRef, {
+            activePlayers: firebase.firestore.FieldValue.increment(-1),
+            totalEliminations: firebase.firestore.FieldValue.increment(1)
+            // pendingReports don't change here
+          }, { merge: true });
+
+
+          // 8. Log Activity
+          transaction.set(activityRef, {
+            type: 'player-eliminated-admin',
+            adminId: currentAdmin?.uid || 'unknown',
+            eliminatedPlayerId: playerId,
+            eliminatedPlayerName: playerName,
+            hunterPlayerId: hunterId, // Who was hunting them (if found)
+            hunterPlayerName: hunterName,
+            newTargetIdForHunter: nextTargetId, // The eliminated player's target
+            newTargetNameForHunter: nextTargetName,
+            timestamp: timestamp,
+            status: 'completed'
+          });
+
+          return { hunterName: hunterName, newTargetName: nextTargetName }; // Return info for alert
+        });
+
+        // --- End Transaction ---
+
+        alert(`Player "${playerName}" eliminated successfully! ${resultData.hunterName ? `Their target "${resultData.newTargetName || 'None'}" was passed to ${resultData.hunterName}.` : 'No hunter found to reassign target to.'}`);
+        // Listener should update the table row.
+
+      } catch (error) {
+        console.error(`Error eliminating player ${playerId}:`, error);
+        alert(`Failed to eliminate player: ${error.message}`);
+      } finally {
+        // Re-enable button if needed
+      }
+    }
+
+    // Firebase Configuration (keep existing)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXIYp8MFRivErUtdMJFaaxq4P1MbG1FgM",
+      authDomain: "vapa-senior-assassin.firebaseapp.com",
+      projectId: "vapa-senior-assassin",
+      storageBucket: "vapa-senior-assassin.appspot.com",
+      messagingSenderId: "455341197665",
+      appId: "1:455341197665:web:63881fd6b7d693a9865d20",
+      measurementId: "G-7KN3VT384R"
+    };
+
+    // Initialize Firebase (keep existing)
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // Global variables (keep existing)
+    let currentAdmin = null;
+    let currentReportId = null;
+    let unsubscribeCallbacks = [];
+    let currentReportFilter = 'pending';
+
+    function stopAllListeners() {
+      console.log("Stopping all specific listeners...");
+      // Check if each listener exists (is running) and stop it if it is
+      if (window.statsListener) { try { window.statsListener(); console.log("Stopped stats listener."); } catch (e) { } window.statsListener = null; }
+      if (window.activityListener) { try { window.activityListener(); console.log("Stopped activity listener."); } catch (e) { } window.activityListener = null; }
+      if (window.playersListener) { try { window.playersListener(); console.log("Stopped players listener."); } catch (e) { } window.playersListener = null; }
+      if (window.targetsListener) { try { window.targetsListener(); console.log("Stopped targets listener."); } catch (e) { } window.targetsListener = null; }
+      if (window.reportsListener) { try { window.reportsListener(); console.log("Stopped reports listener."); } catch (e) { } window.reportsListener = null; }
+      // Clear the old generic array too, just in case it has lingering items
+      unsubscribeCallbacks.forEach(unsub => { try { unsub(); } catch (e) { } });
+      unsubscribeCallbacks = [];
+    }
+
+    // Auth Check (keep existing)
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = 'login.html';
+      } else {
+        db.collection('admins').doc(user.uid).get().then(doc => {
+          if (!doc.exists) {
+            console.log("User is not an admin. Redirecting...");
+            window.location.href = 'profile.html'; // Redirect non-admins
+          } else {
+            console.log("Admin user confirmed:", user.email);
+            currentAdmin = user;
+            document.getElementById('adminAvatar').textContent =
+              user.displayName ? user.displayName.substring(0, 2).toUpperCase() :
+                user.email.substring(0, 2).toUpperCase();
+            initDashboard(); // Load initial view
+            setupNavigation(); // Setup sidebar clicks
+            loadPlayers(); // Load players initially for the default view if it includes the player table
+          }
+        }).catch(error => {
+          console.error("Admin check error:", error);
+          window.location.href = 'profile.html'; // Redirect on error
+        });
+      }
+    });
+
+    // REPLACE the existing setupNavigation function with this
+    function setupNavigation() {
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', e => {
+          e.preventDefault(); // Prevent default link behavior
+
+          // --- Stop previous listeners BEFORE loading new ones ---
+          stopAllListeners(); // Call the new helper function
+
+          // Update active link style
+          document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+
+          // Update section title
+          const sectionName = link.getAttribute('data-section');
+          document.getElementById('sectionTitle').textContent = link.textContent.trim(); // Use link text for title
+
+          // Hide all content sections first
+          document.querySelectorAll('.main-content > div[id$="-section"]').forEach(div => {
+            if (div.id) { // Ensure the div has an ID before hiding
+              div.style.display = 'none';
+            }
+          });
+
+          // Show the selected section
+          const sectionToShow = document.getElementById(`${sectionName}-section`);
+          let effectiveSectionName = sectionName; // Keep track of which section we are actually loading
+          if (sectionToShow) {
+            sectionToShow.style.display = 'block';
+          } else {
+            console.error(`Section not found: ${sectionName}-section. Falling back to dashboard.`);
+            // Fallback: Show dashboard, update title, mark link active
+            document.getElementById('dashboard-section').style.display = 'block';
+            document.getElementById('sectionTitle').textContent = 'Dashboard';
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); // Clear all first
+            document.querySelector('.nav-link[data-section="dashboard"]').classList.add('active'); // Activate dashboard link
+            effectiveSectionName = 'dashboard'; // Make sure we load dashboard data
+          }
+
+          // Load data for the selected section
+          console.log(`Navigating to and loading section: ${effectiveSectionName}`);
+          switch (effectiveSectionName) {
+            case 'dashboard':
+              initDashboard();
+              break;
+            case 'players':
+              loadPlayers();
+              break;
+            case 'targets':
+              loadTargets();
+              break;
+            case 'reports':
+              // Reset filter to 'pending' when navigating to reports section
+              currentReportFilter = 'pending';
+              // Update filter button styles (make 'pending' button visually active)
+              document.querySelectorAll('#reports-section .filter-controls .btn').forEach(btn => {
+                btn.classList.remove('btn-primary'); // Remove active style from all filter buttons
+                if (btn.textContent.toLowerCase().includes('pending')) {
+                  btn.classList.add('btn-primary'); // Add active style to pending button
+                }
+              });
+              loadReports(); // Load reports (will use the 'pending' filter)
+              break;
+            default:
+              console.warn("Unhandled section during navigation:", effectiveSectionName);
+              initDashboard(); // Fallback to loading dashboard data
+              break;
+          }
+        });
+      });
+
+      // --- Initial Page Load Setup ---
+      // Stop any lingering listeners from previous sessions/reloads before starting fresh
+      stopAllListeners();
+      // Ensure the dashboard is shown and its data loaded by default
+      document.getElementById('dashboard-section').style.display = 'block';
+      document.querySelector('.nav-link[data-section="dashboard"]').classList.add('active');
+      document.getElementById('sectionTitle').textContent = 'Dashboard';
+      initDashboard(); // Load dashboard data on initial page load
+    }
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+
+        // Update active link style
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        // Update section title
+        const sectionName = link.getAttribute('data-section');
+        document.getElementById('sectionTitle').textContent = link.textContent.trim(); // Use link text for title
+
+        // Hide all content sections
+        document.querySelectorAll('.main-content > div[id$="-section"]').forEach(div => {
+          if (div.id) { // Ensure the div has an ID before hiding
+            div.style.display = 'none';
+          }
+        });
+
+
+        // Show the selected section
+        const sectionToShow = document.getElementById(`${sectionName}-section`);
+        if (sectionToShow) {
+          sectionToShow.style.display = 'block';
+        } else {
+          console.error(`Section not found: ${sectionName}-section`);
+          // Optionally display the dashboard as a fallback
+          document.getElementById('dashboard-section').style.display = 'block';
+          document.getElementById('sectionTitle').textContent = 'Dashboard';
+          document.querySelector('.nav-link[data-section="dashboard"]').classList.add('active');
+        }
+
+
+        // Clear previous listeners before loading new data
+        unsubscribeCallbacks.forEach(unsub => unsub());
+        unsubscribeCallbacks = [];
+
+        // Load data for the selected section
+        switch (sectionName) {
+          case 'dashboard':
+            initDashboard();
+            break;
+          case 'players':
+            loadPlayers();
+            break;
+          case 'targets':
+            loadTargets();
+            break;
+          case 'reports':
+            loadReports(); // Make sure reports are loaded if this section exists
+            break;
+          default:
+            console.warn("Unhandled section:", sectionName);
+            initDashboard(); // Fallback to dashboard
+            break;
+        }
+      });
+    });
+    // Ensure the dashboard is shown by default on initial load
+    document.getElementById('dashboard-section').style.display = 'block';
+    document.querySelector('.nav-link[data-section="dashboard"]').classList.add('active');
+
+
+    // Dashboard (keep existing initDashboard)
+    function initDashboard() {
+      // Clear any existing listeners first
+      unsubscribeCallbacks.forEach(unsub => unsub());
+      unsubscribeCallbacks = [];
+      console.log("Initializing Dashboard Listeners");
+
+      // Stats listener
+      unsubscribeCallbacks.push(
+        db.collection('stats').doc('current').onSnapshot(doc => {
+          console.log("Stats snapshot received");
+          if (doc.exists) {
+            const data = doc.data();
+            document.getElementById('totalPlayers').textContent = data.totalPlayers || 0;
+            document.getElementById('activePlayers').textContent = data.activePlayers || 0;
+            document.getElementById('totalEliminations').textContent = data.totalEliminations || 0;
+            document.getElementById('pendingReports').textContent = data.pendingReports || 0;
+          } else {
+            console.log("Stats document 'current' does not exist.");
+            // Set defaults if no doc exists
+            document.getElementById('totalPlayers').textContent = 0;
+            document.getElementById('activePlayers').textContent = 0;
+            document.getElementById('totalEliminations').textContent = 0;
+            document.getElementById('pendingReports').textContent = 0;
+          }
+        }, error => {
+          console.error("Error listening to stats:", error);
+        })
+      );
+
+      // Recent activity listener (Example - adjust fields as needed)
+      unsubscribeCallbacks.push(
+        db.collection('activity') // Assuming you have an 'activity' collection
+          .orderBy('timestamp', 'desc')
+          .limit(10)
+          .onSnapshot(snap => {
+            console.log("Activity snapshot received");
+            const tbody = document.getElementById('recentActivity');
+            if (!tbody) {
+              console.error("Element with ID 'recentActivity' not found.");
+              return;
+            }
+            tbody.innerHTML = ''; // Clear previous activity
+
+            if (snap.empty) {
+              tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:1rem; color:#6c757d;">No recent activity found.</td></tr>`;
+              return;
+            }
+
+            snap.forEach(doc => {
+              const act = doc.data();
+              const timestamp = act.timestamp?.toDate ? act.timestamp.toDate().toLocaleString() : 'Invalid Date';
+              const description = getActivityDescription(act); // Use helper function
+
+              // Basic status styling (adapt as needed)
+              let statusClass = 'status-pending'; // Default
+              if (act.status === 'approved' || act.status === 'active' || act.status === 'completed') statusClass = 'status-active';
+              if (act.status === 'rejected' || act.status === 'eliminated') statusClass = 'status-eliminated';
+
+
+              tbody.innerHTML += `
+                    <tr>
+                    <td>${act.playerName || act.playerId || 'System'}</td>
+                    <td>${description}</td>
+                    <td>${timestamp}</td>
+                    <td>
+                        <span class="status-badge ${statusClass}">
+                        ${act.status || 'N/A'}
+                        </span>
+                    </td>
+                    </tr>
+                `;
+            });
+          }, error => {
+            console.error("Activity listener error:", error);
+            const tbody = document.getElementById('recentActivity');
+            if (tbody) {
+              tbody.innerHTML = `<tr><td colspan="4" class="error-state">Error loading activity.</td></tr>`;
+            }
+          })
+      );
+    }
+
+
+    async function loadPlayers() {
+      console.log("Loading players...");
+      const tbody = document.getElementById('playersTable');
+      if (!tbody) {
+        console.error("Element 'playersTable' not found.");
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="5" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading players...</td></tr>';
+
+      if (window.playersListener) {
+        console.log("Stopping existing players listener before attaching new one.");
+        try {
+          window.playersListener(); // Call the unsubscribe function
+        } catch (e) {
+          console.error("Error stopping previous players listener:", e);
+        }
+        window.playersListener = null; // Explicitly nullify the listener variable
+      } else {
+        console.log("No existing players listener found.");
+      }
+
+      try {
+        console.log("Attaching NEW players listener."); // Log attachment
+        window.playersListener = db.collection('players')
+          .orderBy('createdAt', 'desc')
+          .onSnapshot(async (snap) => {
+            console.log(`Players snapshot received: ${snap.size} docs. Redrawing table.`);
+            // **** Ensure table body is cleared ****
+            const currentTbody = document.getElementById('playersTable'); // Re-get tbody ref just in case
+            if (!currentTbody) {
+              console.error("Players table body disappeared during snapshot update!");
+              return;
+            }
+            currentTbody.innerHTML = ''; // Clear existing rows - THIS IS CRUCIAL
+
+            if (snap.empty) {
+              currentTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:#6c757d;">No players found.</td></tr>`;
+              return;
+            }
+
+            snap.forEach(doc => {
+              const player = doc.data();
+              const playerId = doc.id;
+              const playerName = player.fullName || 'Unknown';
+
+              let approvalStatusText = player.approvalStatus || 'unknown';
+              let approvalStatusClass = getApprovalStatusClass(approvalStatusText);
+              let gameStatusText = player.status || 'N/A';
+              let gameStatusClass = getStatusClass(gameStatusText);
+
+              let actionButtons = '';
+              if (approvalStatusText === 'pending') {
+                actionButtons += `
+              <button class="btn btn-success btn-sm" onclick="approveUser('${playerId}')" title="Approve User Registration"><i class="fas fa-check"></i></button>
+              <button class="btn btn-danger btn-sm" onclick="rejectUser('${playerId}')" title="Reject User Registration"><i class="fas fa-times"></i></button>
+            `;
+              } else {
+                actionButtons += `
+              <button class="btn btn-primary btn-sm" onclick="showEditPlayerModal('${playerId}')" title="Edit Player Details"><i class="fas fa-edit"></i></button>
+            `;
+                if (gameStatusText === 'active' && approvalStatusText === 'approved') {
+                  actionButtons += `
+                <button class="btn btn-warning btn-sm" onclick="eliminatePlayer('${playerId}', '${playerName.replace(/'/g, "\\'")}')" title="Manually Eliminate Player"><i class="fas fa-skull-crossbones"></i></button>
+              `;
+                }
+              }
+              actionButtons += `
+            <button class="btn btn-danger btn-sm" onclick="deletePlayer('${playerId}', '${playerName.replace(/'/g, "\\'")}')" title="Delete Player Record"><i class="fas fa-trash"></i></button>
+          `;
+
+              // Use currentTbody reference here
+              currentTbody.innerHTML += `
+            <tr>
+                <td>${playerName}</td>
+                <td>${player.email || 'No email'}</td>
+                <td>
+                    <span class="status-badge ${approvalStatusClass}" title="Approval: ${approvalStatusText}">${approvalStatusText.charAt(0).toUpperCase() + approvalStatusText.slice(1)}</span>
+                    <span class="status-badge ${gameStatusClass}" title="Game: ${gameStatusText}">${gameStatusText.charAt(0).toUpperCase() + gameStatusText.slice(1)}</span>
+                </td>
+                <td>${player.kills || 0}</td>
+                <td style="display: flex; gap: 5px; white-space: nowrap;">${actionButtons}</td>
+            </tr>
+          `;
+            });
+          }, error => {
+            console.error("Players listener error:", error);
+            const errorTbody = document.getElementById('playersTable');
+            if (errorTbody) {
+              errorTbody.innerHTML = `<tr><td colspan="5" class="error-state"><i class="fas fa-exclamation-circle"></i> Error loading players</td></tr>`;
+            }
+            // Attempt to stop listener on error
+            if (window.playersListener) {
+              try { window.playersListener(); } catch (e) { }
+              window.playersListener = null;
+            }
+          });
+      } catch (error) {
+        console.error("Failed to attach players listener:", error);
+        tbody.innerHTML = `<tr><td colspan="5" class="error-state"><i class="fas fa-exclamation-circle"></i> Failed to start players listener</td></tr>`;
+      }
+    }
+
+    function getApprovalStatusClass(status) {
+      switch (status) {
+        case 'approved': return 'status-active'; // Use success style
+        case 'pending': return 'status-pending'; // Use warning style
+        case 'rejected': return 'status-eliminated'; // Use danger style
+        default: return '';
+      }
+    }
+
+
+    // --- NEW: Approve User Function ---
+    async function approveUser(userId) {
+      console.log(`Attempting to approve user: ${userId}`);
+      if (!confirm(`Are you sure you want to approve this user (${userId})?`)) return;
+
+      const playerRef = db.collection('players').doc(userId);
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc(); // For logging
+
+      try {
+        const playerDoc = await playerRef.get();
+        if (!playerDoc.exists || playerDoc.data().approvalStatus !== 'pending') {
+          alert('User not found or not in pending state.');
+          return;
+        }
+        const playerData = playerDoc.data();
+
+
+        const batch = db.batch();
+
+        // Update player status
+        batch.update(playerRef, {
+          approvalStatus: 'approved',
+          status: 'active' // Also set the general game status to active
+        });
+
+        // Increment active player count in stats
+        batch.set(statsRef, { // Use set with merge to handle potential non-existence
+          activePlayers: firebase.firestore.FieldValue.increment(1)
+        }, { merge: true });
+
+
+        // Log activity
+        batch.set(activityRef, {
+          type: 'user-approved',
+          adminId: currentAdmin?.uid || 'unknown',
+          playerId: userId,
+          playerName: playerData.fullName || 'Unknown',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          status: 'completed'
+        });
+
+
+        await batch.commit();
+        console.log(`User ${userId} approved successfully.`);
+        alert('User approved successfully!');
+        // No need to call loadPlayers() here if the listener is active, it should update automatically.
+      } catch (error) {
+        console.error(`Error approving user ${userId}:`, error);
+        alert('Failed to approve user. See console for details.');
+      }
+    }
+
+    // --- NEW: Reject User Function ---
+    async function rejectUser(userId) {
+      console.log(`Attempting to reject user: ${userId}`);
+      // Add prompt for reason? Optional.
+      if (!confirm(`Are you sure you want to REJECT this user (${userId})? This is usually non-reversible.`)) return;
+
+      const playerRef = db.collection('players').doc(userId);
+      const statsRef = db.collection('stats').doc('current'); // To decrement total count
+      const activityRef = db.collection('activity').doc(); // For logging
+
+
+      try {
+        const playerDoc = await playerRef.get();
+        if (!playerDoc.exists || playerDoc.data().approvalStatus !== 'pending') {
+          alert('User not found or not in pending state.');
+          return;
+        }
+        const playerData = playerDoc.data();
+
+
+        const batch = db.batch();
+
+        // Update player status
+        batch.update(playerRef, {
+          approvalStatus: 'rejected',
+          status: 'rejected' // Also set general status
+        });
+
+        // Decrement total player count as they are rejected
+        batch.set(statsRef, { // Use set with merge
+          totalPlayers: firebase.firestore.FieldValue.increment(-1)
+          // Do NOT decrement active players, as they were never active
+        }, { merge: true });
+
+
+        // Log activity
+        batch.set(activityRef, {
+          type: 'user-rejected',
+          adminId: currentAdmin?.uid || 'unknown',
+          playerId: userId,
+          playerName: playerData.fullName || 'Unknown',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          status: 'completed'
+        });
+
+
+        // Optional: Disable Auth User - Requires Admin SDK usually, might fail client-side
+        // try {
+        //   await auth.updateUser(userId, { disabled: true }); // This likely won't work client-side
+        //   console.log(`Auth account for ${userId} disabled.`);
+        // } catch (authError) {
+        //   console.warn(`Could not disable Auth account for ${userId} (might require Admin SDK):`, authError);
+        // }
+
+        await batch.commit();
+        console.log(`User ${userId} rejected successfully.`);
+        alert('User rejected successfully!');
+        // Listener should update the table automatically.
+      } catch (error) {
+        console.error(`Error rejecting user ${userId}:`, error);
+        alert('Failed to reject user. See console for details.');
+      }
+    }
+
+
+    function loadTargets() {
+      console.log("Loading targets...");
+      const tbody = document.getElementById('targetsTable');
+      if (!tbody) {
+        console.error("Element 'targetsTable' not found.");
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="4" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading targets...</td></tr>';
+
+      try {
+        // Stop existing listener first
+        if (window.targetsListener) { try { window.targetsListener(); } catch (e) { } window.targetsListener = null; }
+        console.log("Attaching targets listener...");
+
+        // Listen to the 'targets' collection
+        window.targetsListener = db.collection('targets')
+          // .orderBy('playerName') // Optional: order assignments by player name
+          .onSnapshot(snap => {
+            console.log(`Targets snapshot received: ${snap.size} docs`);
+            tbody.innerHTML = ''; // Clear existing rows
+
+            if (snap.empty) {
+              tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2rem; color:#6c757d;">No target assignments found. Use 'Assign Targets' button.</td></tr>`;
+              return;
+            }
+
+            snap.forEach(doc => {
+              const assignment = doc.data();
+              const playerId = doc.id; // Document ID in 'targets' collection IS the player's ID
+
+              // Status of the assignment (active, eliminated, completed etc.)
+              let statusText = assignment.status || 'unknown';
+              let statusClass = getStatusClass(statusText); // Use the general helper
+
+              tbody.innerHTML += `
+                            <tr>
+                                <td>${assignment.playerName || playerId} (${playerId.substring(0, 6)}...)</td>
+                                <td>${assignment.targetName || 'None'} ${assignment.targetId ? `(${assignment.targetId.substring(0, 6)}...)` : ''}</td>
+                                <td>
+                                    <span class="status-badge ${statusClass}">
+                                        ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm"onclick="showReassignTargetModal('${playerId}', '${assignment.playerName.replace(/'/g, "\\'")}')
+                                    "title="Reassign Target"><i class="fas fa-random"></i> Reassign</button>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+            });
+          }, error => {
+            console.error("Targets load error:", error);
+            tbody.innerHTML = `<tr><td colspan="4" class="error-state"><i class="fas fa-exclamation-circle"></i> Error loading targets</td></tr>`;
+            if (window.targetsListener) { try { window.targetsListener(); } catch (e) { } window.targetsListener = null; } // Stop on error
+          });
+      } catch (error) {
+        console.error("Failed to attach targets listener:", error);
+        tbody.innerHTML = `<tr><td colspan="4" class="error-state"><i class="fas fa-exclamation-circle"></i> Failed to start targets listener</td></tr>`;
+      }
+      // REMOVE any line like: unsubscribeCallbacks.push(targetsListener);
+    }
+
+    async function assignRandomTargets() {
+      if (!confirm('This will assign random targets to all ACTIVE and APPROVED players. Existing assignments may be overwritten. Continue?')) return;
+      console.log("Assigning random targets...");
+      document.body.style.cursor = 'wait';
+
+      try {
+        // Get all active & approved players
+        const playersSnapshot = await db.collection('players')
+          .where('status', '==', 'active')
+          .where('approvalStatus', '==', 'approved')
+          .get();
+
+        if (playersSnapshot.empty || playersSnapshot.size < 2) {
+          alert('Not enough active and approved players found to assign targets (need at least 2).');
+          document.body.style.cursor = 'default';
+          return;
+        }
+
+        const players = playersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Shuffle players array
+        let currentIndex = players.length, randomIndex;
+        while (currentIndex !== 0) {
+          randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+          [players[currentIndex], players[randomIndex]] =
+            [players[randomIndex], players[currentIndex]];
+        }
+
+        // Create target assignments in a batch
+        const batch = db.batch();
+        const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+        for (let i = 0; i < players.length; i++) {
+          const player = players[i];
+          const targetIndex = (i + 1) % players.length;
+          const target = players[targetIndex];
+
+          // 1. Update TARGETS collection
+          const targetAssignmentRef = db.collection('targets').doc(player.id);
+          batch.set(targetAssignmentRef, {
+            playerId: player.id,
+            playerName: player.fullName || 'Unknown Name',
+            targetId: target.id,
+            targetName: target.fullName || 'Unknown Target',
+            status: 'active',
+            assignedAt: timestamp,
+            targetAcademy: target.academy || null,
+            targetInstagram: target.instagram || null
+          }, { merge: true });
+
+          // 2. UPDATE PLAYER DOCUMENT WITH TARGET INFO
+          const playerRef = db.collection('players').doc(player.id);
+          batch.update(playerRef, {
+            targetId: target.id,
+            targetName: target.fullName || 'Unknown Target',
+            targetAcademy: target.academy || 'N/A',
+            targetInstagram: target.instagram || null,
+            status: 'active' // Ensure player remains active
+          });
+
+          // 3. Log activity (existing code)
+          const activityRef = db.collection('activity').doc();
+          batch.set(activityRef, {
+            type: 'target-assigned',
+            adminId: currentAdmin?.uid || 'system',
+            playerId: player.id,
+            playerName: player.fullName,
+            targetId: target.id,
+            targetName: target.fullName,
+            timestamp: timestamp,
+            status: 'completed'
+          });
+        }
+
+        await batch.commit();
+        alert(`Successfully assigned targets to ${players.length} players!`);
+
+      } catch (error) {
+        console.error("Error assigning targets:", error);
+        alert(`Error: ${error.message}`);
+      } finally {
+        document.body.style.cursor = 'default';
+      }
+    }
+
+    async function reassignTarget(playerId) {
+      // This needs more complex logic: find a *new* available target
+      // that isn't the player themselves and isn't their current target (if any).
+      // Requires fetching all active/approved players again.
+      alert(`Reassign target function for ${playerId} is not fully implemented yet.`);
+      console.warn("Reassign target called but not implemented.");
+    }
+
+    function loadReports() {
+      if (window.reportsListener) { try { window.reportsListener(); console.log("Stopped previous reports listener."); } catch (e) { } window.reportsListener = null; }
+
+      console.log(`Loading reports with filter: ${currentReportFilter}`);
+      const tbody = document.getElementById('reportsTable');
+      const emptyState = document.getElementById('reports-empty'); // Reference to empty state div
+
+      if (!tbody) {
+        console.error("Element 'reportsTable' not found.");
+        return;
+      }
+      if (!emptyState) {
+        console.warn("Element 'reports-empty' not found."); // Non-critical
+      }
+
+      tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading reports...</td></tr>';
+      if (emptyState) emptyState.style.display = 'none'; // Hide empty state while loading
+
+      // Build the query based on the filter
+      let query = db.collection('killReports');
+      if (currentReportFilter !== 'all') {
+        query = query.where('status', '==', currentReportFilter);
+      }
+      query = query.orderBy('reportedAt', 'desc'); // Order by report time, newest first
+
+      try {
+        console.log("Attaching reports listener...");
+        // Assign the listener function directly to the window variable
+        window.reportsListener = query.onSnapshot(snap => {
+          console.log(`Reports snapshot received (${currentReportFilter}): ${snap.size} docs`);
+          tbody.innerHTML = ''; // Clear previous/loading rows
+
+          if (snap.empty) {
+            tbody.innerHTML = `
+                        <tr>
+                        <td colspan="6" style="text-align:center; padding:2rem; color:#6c757d;">
+                            No ${currentReportFilter} reports found.
+                        </td>
+                        </tr>
+                    `;
+            // Show specific empty state message only if filter is 'pending'
+            if (emptyState && currentReportFilter === 'pending') {
+              emptyState.style.display = 'block';
+            } else if (emptyState) {
+              emptyState.style.display = 'none'; // Hide for other filters
+            }
+          } else {
+            if (emptyState) emptyState.style.display = 'none'; // Hide empty state if reports are found
+
+            snap.forEach(doc => {
+              const report = doc.data();
+              const reportId = doc.id;
+
+              // Determine status and actions
+              let statusText = report.status || 'unknown';
+              let statusClass = getStatusClass(statusText); // Use general helper
+              let reportActions = '';
+
+              // Format kill time or report time safely
+              let displayTime = 'Unknown Time';
+              if (report.killTime) {
+                try { displayTime = new Date(report.killTime).toLocaleString(); } catch (e) { console.warn("Bad killTime format", e); }
+              } else if (report.reportedAt?.toDate) {
+                try { displayTime = report.reportedAt.toDate().toLocaleString(); } catch (e) { console.warn("Bad reportedAt format", e); }
+              }
+
+              // Only show Approve/Reject buttons if the report is pending
+              if (statusText === 'pending') {
+                reportActions = `
+                                <button class="btn btn-success btn-sm" onclick="approveReportFromTable('${reportId}')" title="Approve Report">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="rejectReportFromTable('${reportId}')" title="Reject Report">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            `;
+              }
+
+              tbody.innerHTML += `
+                            <tr>
+                                <td>${report.reporterName || report.reporterId || 'Unknown'}</td>
+                                <td>${report.targetName || report.targetId || 'Unknown'}</td>
+                                <td>${displayTime}</td>
+                                <td>
+                                    <button class="btn btn-primary btn-sm" onclick="viewEvidence('${reportId}')" title="View Evidence">
+                                        <i class="fas fa-eye"></i> View (${report.evidenceUrls?.length || 0})
+                                    </button>
+                                </td>
+                                <td>
+                                    <span class="status-badge ${statusClass}">
+                                        ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
+                                    </span>
+                                </td>
+                                <td style="white-space:nowrap; display:flex; gap: 5px;">
+                                    ${reportActions} <!-- Actions only appear if pending -->
+                                </td>
+                            </tr>
+                        `;
+            });
+          }
+        }, error => {
+          console.error(`Reports load error (${currentReportFilter}):`, error);
+          tbody.innerHTML = `<tr><td colspan="6" class="error-state"><i class="fas fa-exclamation-circle"></i> Error loading reports</td></tr>`;
+          if (emptyState) emptyState.style.display = 'none'; // Hide empty state on error too
+          if (window.reportsListener) { try { window.reportsListener(); } catch (e) { } window.reportsListener = null; } // Stop on error
+        });
+      } catch (error) {
+        console.error("Failed to attach reports listener:", error);
+        tbody.innerHTML = `<tr><td colspan="6" class="error-state"><i class="fas fa-exclamation-circle"></i> Failed to start reports listener</td></tr>`;
+        if (emptyState) emptyState.style.display = 'none';
+      }
+    }
+
+    function filterReports(filter) {
+      // Don't reload if the filter hasn't changed
+      if (currentReportFilter === filter) {
+        console.log(`Filter already set to: ${filter}. No change.`);
+        return;
+      }
+
+      currentReportFilter = filter;
+      console.log(`Setting report filter to: ${filter}`);
+
+      // Update button styles (make the clicked button primary)
+      document.querySelectorAll('#reports-section .filter-controls .btn').forEach(btn => {
+        btn.classList.remove('btn-primary'); // Remove primary from all
+        // Check button's own onclick attribute to see if it matches the filter
+        const btnFilter = btn.getAttribute('onclick')?.match(/filterReports\('([^']+)'\)/)?.[1];
+        if (btnFilter === filter) {
+          btn.classList.add('btn-primary'); // Add primary to the selected one
+        }
+      });
+      loadReports();
+    }
+    // Action 2: Replace this function in admin.html
+    async function approveReport() {
+      if (!currentReportId) {
+        alert("No report selected in modal.");
+        return;
+      }
+      if (!confirm(`Are you sure you want to APPROVE report ${currentReportId}? This will eliminate the target and assign points.`)) {
+        return;
+      }
+      console.log(`Attempting to approve report via modal: ${currentReportId}`);
+
+      const reportRef = db.collection('killReports').doc(currentReportId);
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc(); // For logging
+
+      // Disable modal buttons
+      const approveBtnModal = document.getElementById('approveBtn');
+      const rejectBtnModal = document.getElementById('rejectBtn');
+      if (approveBtnModal) approveBtnModal.disabled = true;
+      if (rejectBtnModal) rejectBtnModal.disabled = true;
+
+      try {
+        // --- Use a Transaction for atomic updates ---
+        const resultData = await db.runTransaction(async (transaction) => {
+          // 1. Get all necessary documents within the transaction
+          const reportDoc = await transaction.get(reportRef);
+          if (!reportDoc.exists) throw new Error("Report not found.");
+          const report = reportDoc.data();
+
+          // Check if report is actually pending
+          if (report.status !== 'pending') {
+            throw new Error(`Report already processed with status: ${report.status}.`);
+          }
+
+          const targetPlayerRef = db.collection('players').doc(report.targetId);
+          const reporterPlayerRef = db.collection('players').doc(report.reporterId);
+          // Ref to the *eliminated* player's entry in the 'targets' collection (to get their old target)
+          const eliminatedTargetAssignmentRef = db.collection('targets').doc(report.targetId);
+
+          const targetPlayerDoc = await transaction.get(targetPlayerRef);
+          const reporterPlayerDoc = await transaction.get(reporterPlayerRef);
+          const eliminatedTargetAssignmentDoc = await transaction.get(eliminatedTargetAssignmentRef); // Get the doc from 'targets'
+
+          if (!targetPlayerDoc.exists) throw new Error(`Target player ${report.targetId} not found.`);
+          if (!reporterPlayerDoc.exists) throw new Error(`Reporter player ${report.reporterId} not found.`);
+
+          // Check if target is already eliminated (race condition)
+          const targetPlayerData = targetPlayerDoc.data();
+          if (targetPlayerData.status === 'eliminated') {
+            // Target already gone. Reject this report automatically.
+            console.warn(`Target ${report.targetId} was already eliminated. Rejecting report ${currentReportId}.`);
+            transaction.update(reportRef, {
+              status: 'rejected',
+              reviewedBy: currentAdmin?.uid || 'system-auto-reject',
+              reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              reason: 'Target already eliminated' // Optional reason
+            });
+            // Also update stats for the rejection
+            transaction.set(statsRef, {
+              pendingReports: firebase.firestore.FieldValue.increment(-1)
+            }, { merge: true });
+            // Do NOT proceed with kill/target assignment
+            return { autoRejected: true, targetName: report.targetName }; // Signal auto-rejection
+          }
+
+
+          // 2. Determine the reporter's *next* target
+          let nextTargetId = null;
+          let nextTargetName = null;
+          let nextTargetAcademy = null;
+          let nextTargetInstagram = null;
+
+          if (eliminatedTargetAssignmentDoc.exists) {
+            const eliminatedAssignment = eliminatedTargetAssignmentDoc.data();
+            // Check if the eliminated player *had* a target and it wasn't the reporter
+            if (eliminatedAssignment.targetId && eliminatedAssignment.targetId !== report.reporterId) {
+              nextTargetId = eliminatedAssignment.targetId;
+              nextTargetName = eliminatedAssignment.targetName; // Name from the assignment doc
+              nextTargetAcademy = eliminatedAssignment.targetAcademy || null; // Details from assignment doc
+              nextTargetInstagram = eliminatedAssignment.targetInstagram || null;
+              console.log(`Reporter ${report.reporterId} will inherit target: ${nextTargetId} (${nextTargetName})`);
+            } else {
+              console.log(`Eliminated player ${report.targetId} target was null, self, or reporter. No target inheritance.`);
+            }
+          } else {
+            console.log(`Target assignment doc for eliminated player ${report.targetId} not found. No target inheritance.`);
+          }
+
+          // 3. Prepare Updates
+          const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+          const reporterFullName = reporterPlayerDoc.data().fullName || report.reporterName || 'Unknown Reporter';
+          const targetFullName = targetPlayerDoc.data().fullName || report.targetName || 'Unknown Target';
+
+          // 3a. Update Report Status
+          transaction.update(reportRef, {
+            status: 'approved',
+            reviewedBy: currentAdmin?.uid || 'unknown',
+            reviewedAt: timestamp
+          });
+
+          // 3b. Update Target Player's Status (eliminate them)
+          transaction.update(targetPlayerRef, {
+            status: 'eliminated',
+            eliminatedByReporterId: report.reporterId, // Store who eliminated them
+            eliminatedByReporterName: reporterFullName,
+            eliminatedAt: timestamp,
+            targetId: null, // Clear their target info
+            targetName: null,
+            targetAcademy: null,
+            targetInstagram: null,
+            lastReportStatus: null // Clear any pending report status they might have had
+          });
+
+          // 3c. Update Reporter Player's Stats and *New Target*
+          transaction.update(reporterPlayerRef, {
+            kills: firebase.firestore.FieldValue.increment(1),
+            lastEliminationAt: timestamp,
+            targetId: nextTargetId, // Assign the new target ID (or null)
+            targetName: nextTargetName, // Assign the new target name (or null)
+            targetAcademy: nextTargetAcademy, // Assign new target details
+            targetInstagram: nextTargetInstagram,
+            lastReportStatus: 'approved', // Set their report status
+            lastReportReviewedAt: timestamp
+          });
+
+          // 3d. Update the 'targets' collection for the REPORTER (assign new target)
+          const reporterTargetAssignmentRef = db.collection('targets').doc(report.reporterId);
+          transaction.set(reporterTargetAssignmentRef, {
+            playerId: report.reporterId,
+            playerName: reporterFullName,
+            targetId: nextTargetId,
+            targetName: nextTargetName,
+            targetAcademy: nextTargetAcademy,
+            targetInstagram: nextTargetInstagram,
+            status: nextTargetId ? 'active' : 'inactive', // Set status based on whether they got a target
+            assignedAt: timestamp
+          }, { merge: true }); // Use merge to update or create
+
+          // 3e. Update the 'targets' collection for the ELIMINATED player (mark as eliminated)
+          transaction.set(eliminatedTargetAssignmentRef, { // Use set+merge to ensure doc exists and fields are updated
+            playerId: report.targetId,
+            playerName: targetFullName,
+            targetId: null, // Clear their target
+            targetName: null,
+            targetAcademy: null,
+            targetInstagram: null,
+            status: 'eliminated', // Mark assignment as eliminated
+            assignedAt: timestamp // Update timestamp
+          }, { merge: true });
+
+
+          // 3f. Log Activity
+          transaction.set(activityRef, {
+            type: 'elimination-approved',
+            adminId: currentAdmin?.uid || 'unknown',
+            reporterId: report.reporterId,
+            reporterName: reporterFullName,
+            targetId: report.targetId,
+            targetName: targetFullName,
+            reportId: currentReportId,
+            newTargetId: nextTargetId,
+            newTargetName: nextTargetName,
+            timestamp: timestamp,
+            status: 'approved'
+          });
+
+          // 3g. Update Global Stats
+          transaction.set(statsRef, {
+            pendingReports: firebase.firestore.FieldValue.increment(-1),
+            activePlayers: firebase.firestore.FieldValue.increment(-1),
+            totalEliminations: firebase.firestore.FieldValue.increment(1)
+          }, { merge: true }); // Use merge to handle potential concurrent updates or non-existence
+
+          // Return names for the success message
+          return { reporterName: reporterFullName, targetName: targetFullName };
+        });
+
+        // Check if it was auto-rejected due to race condition
+        if (resultData.autoRejected) {
+          alert(`Report automatically rejected: Target ${resultData.targetName} was already eliminated.`);
+        } else {
+          alert(`Kill report approved! ${resultData.reporterName} eliminated ${resultData.targetName}. Kills updated, target reassigned if applicable.`);
+        }
+        closeModal(); // Close modal on success or auto-rejection
+
+      } catch (error) {
+        console.error("Error approving report:", error);
+        alert(`Failed to approve report: ${error.message}`);
+        // Re-enable buttons on failure only if modal is still open
+        if (document.getElementById('evidenceModal')?.style.display !== 'none') {
+          if (approveBtnModal) approveBtnModal.disabled = false;
+          if (rejectBtnModal) rejectBtnModal.disabled = false;
+        }
+      }
+    }
+    // Action 3: Replace this function in admin.html
+    async function rejectReport() {
+      if (!currentReportId) {
+        alert("No report selected in modal.");
+        return;
+      }
+      if (!confirm('Are you sure you want to REJECT this kill report?')) return;
+      console.log(`Attempting to reject report via modal: ${currentReportId}`);
+
+      const reportRef = db.collection('killReports').doc(currentReportId);
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc(); // For logging
+
+      // Disable modal buttons
+      const approveBtnModal = document.getElementById('approveBtn');
+      const rejectBtnModal = document.getElementById('rejectBtn');
+      if (approveBtnModal) approveBtnModal.disabled = true;
+      if (rejectBtnModal) rejectBtnModal.disabled = true;
+
+      try {
+        // Get report data first for logging and player update
+        const reportDoc = await reportRef.get();
+        if (!reportDoc.exists) throw new Error("Report not found.");
+        const report = reportDoc.data();
+
+        if (report.status !== 'pending') {
+          alert(`This report has already been processed (${report.status}).`);
+          if (approveBtnModal) approveBtnModal.disabled = false; // Re-enable buttons if already processed
+          if (rejectBtnModal) rejectBtnModal.disabled = false;
+          return; // Exit if already processed
+        }
+
+        const reporterPlayerRef = db.collection('players').doc(report.reporterId);
+        const batch = db.batch();
+        const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+        // 1. Update Report Status
+        batch.update(reportRef, {
+          status: 'rejected',
+          reviewedBy: currentAdmin?.uid || 'unknown',
+          reviewedAt: timestamp
+          // Optionally add a rejection reason field here
+        });
+
+        // 2. Update Reporter Player's Last Report Status
+        batch.update(reporterPlayerRef, {
+          lastReportStatus: 'rejected', // Set their report status
+          lastReportReviewedAt: timestamp
+        });
+
+        // 3. Decrement Pending Reports Count in Stats
+        batch.set(statsRef, {
+          pendingReports: firebase.firestore.FieldValue.increment(-1)
+        }, { merge: true });
+
+        // 4. Log Activity
+        batch.set(activityRef, {
+          type: 'report-rejected',
+          adminId: currentAdmin?.uid || 'unknown',
+          reporterId: report.reporterId,
+          reporterName: report.reporterName || 'Unknown',
+          targetId: report.targetId,
+          targetName: report.targetName || 'Unknown',
+          reportId: currentReportId,
+          timestamp: timestamp,
+          status: 'rejected'
+        });
+
+        await batch.commit();
+        alert('Kill report rejected successfully!');
+        closeModal(); // Close modal on success
+
+      } catch (error) {
+        console.error("Error rejecting report:", error);
+        alert(`Failed to reject report: ${error.message}`);
+        // Re-enable buttons on failure only if modal is still open
+        if (document.getElementById('evidenceModal')?.style.display !== 'none') {
+          if (approveBtnModal) approveBtnModal.disabled = false;
+          if (rejectBtnModal) rejectBtnModal.disabled = false;
+        }
+      }
+    }
+
+    function approveReportFromTable(reportId) {
+      currentReportId = reportId;
+      approveReport();
+    }
+
+    function rejectReportFromTable(reportId) {
+      currentReportId = reportId;
+      rejectReport();
+    }
+
+    function viewEvidence(reportId) {
+      currentReportId = reportId; // Store the ID for modal actions
+      console.log(`Viewing evidence for report: ${reportId}`);
+      const modal = document.getElementById('evidenceModal');
+      const detailsDiv = document.getElementById('reportDetails');
+      const evidenceGrid = document.getElementById('evidenceGrid');
+      const approveBtn = document.getElementById('approveBtn');
+      const rejectBtn = document.getElementById('rejectBtn');
+
+
+      if (!modal || !detailsDiv || !evidenceGrid || !approveBtn || !rejectBtn) {
+        console.error("Modal elements not found!");
+        return;
+      }
+
+
+      // Reset modal state
+      detailsDiv.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading report details...</p>';
+      evidenceGrid.innerHTML = '';
+      approveBtn.disabled = true; // Disable buttons while loading
+      rejectBtn.disabled = true;
+      modal.style.display = 'flex'; // Show modal
+
+
+      db.collection('killReports').doc(reportId).get().then(doc => {
+        if (!doc.exists) {
+          detailsDiv.innerHTML = '<p class="error-state">Report not found.</p>';
+          return;
+        }
+
+
+        const report = doc.data();
+
+
+        // Format time safely
+        let displayTime = 'Unknown Time';
+        try {
+          if (report.killTime) {
+            displayTime = new Date(report.killTime).toLocaleString();
+          } else if (report.reportedAt?.toDate) {
+            displayTime = report.reportedAt.toDate().toLocaleString();
+          }
+        } catch (e) { console.warn("Error parsing modal time", e); }
+
+
+        // Populate details
+        detailsDiv.innerHTML = `
+                <div class="detail-row"><div class="detail-label">Reporter:</div><div class="detail-value">${report.reporterName || 'Unknown'} (${report.reporterId || 'N/A'})</div></div>
+                <div class="detail-row"><div class="detail-label">Target:</div><div class="detail-value">${report.targetName || 'Unknown'} (${report.targetId || 'N/A'})</div></div>
+                <div class="detail-row"><div class="detail-label">Time:</div><div class="detail-value">${displayTime}</div></div>
+                <div class="detail-row"><div class="detail-label">Location:</div><div class="detail-value">${report.location || 'Unknown'}</div></div>
+                <div class="detail-row"><div class="detail-label">Witnesses:</div><div class="detail-value">${report.witnesses?.join(', ') || 'None'}</div></div>
+                <div class="detail-row"><div class="detail-label">Status:</div><div class="detail-value"><span class="status-badge ${getStatusClass(report.status)}">${report.status || 'pending'}</span></div></div>
+                 ${report.reviewedBy ? `<div class="detail-row"><div class="detail-label">Reviewed By:</div><div class="detail-value">${report.reviewedBy}</div></div>` : ''}
+                 ${report.reviewedAt ? `<div class="detail-row"><div class="detail-label">Reviewed At:</div><div class="detail-value">${report.reviewedAt.toDate().toLocaleString()}</div></div>` : ''}
+             `;
+
+
+        // Show/hide action buttons based on status
+        if (report.status === 'pending') {
+          approveBtn.style.display = 'inline-flex';
+          rejectBtn.style.display = 'inline-flex';
+          approveBtn.disabled = false; // Enable buttons for pending reports
+          rejectBtn.disabled = false;
+        } else {
+          approveBtn.style.display = 'none';
+          rejectBtn.style.display = 'none';
+        }
+
+
+        // Populate evidence
+        evidenceGrid.innerHTML = ''; // Clear previous evidence
+        if (!report.evidenceUrls || report.evidenceUrls.length === 0) {
+          evidenceGrid.innerHTML = '<p>No evidence provided.</p>';
+        } else {
+          report.evidenceUrls.forEach(url => {
+            try {
+              const urlLower = url.toLowerCase();
+              // Basic check for video extensions - adjust if needed
+              const isVideo = urlLower.includes('.mp4') || urlLower.includes('.mov') || urlLower.includes('video'); // Consider mime types if possible
+
+              const itemDiv = document.createElement('div');
+              itemDiv.className = 'evidence-item';
+
+              if (isVideo) {
+                itemDiv.innerHTML = `
+                                <video controls preload="metadata">
+                                    <source src="${url}" type="video/mp4"> {/* Common type, might need others */}
+                                    Your browser doesn't support embedded videos. <a href="${url}" target="_blank">Link</a>
+                                </video>
+                                <div class="evidence-info"><a href="${url}" target="_blank" title="Open video in new tab"><i class="fas fa-video"></i> Video</a></div>
+                             `;
+              } else {
+                itemDiv.innerHTML = `
+                                <a href="${url}" target="_blank" title="Open image in new tab">
+                                    <img src="${url}" alt="Evidence Photo" loading="lazy">
+                                </a>
+                                <div class="evidence-info"><a href="${url}" target="_blank" title="Open image in new tab"><i class="fas fa-image"></i> Image</a></div>
+                             `;
+              }
+              evidenceGrid.appendChild(itemDiv);
+            } catch (e) {
+              console.error("Error processing evidence URL:", url, e);
+              const errorItem = document.createElement('div');
+              errorItem.className = 'evidence-item error-state';
+              errorItem.innerHTML = `<p>Error loading evidence: <a href="${url}" target="_blank">${url}</a></p>`;
+              evidenceGrid.appendChild(errorItem);
+            }
+          });
+        }
+
+
+      }).catch(error => {
+        console.error("Error loading report details for modal:", error);
+        detailsDiv.innerHTML = `<p class="error-state">Error loading report: ${error.message}</p>`;
+        // Keep buttons disabled on error
+      });
+    }
+
+
+    function closeModal() {
+      const modal = document.getElementById('evidenceModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      currentReportId = null; // Clear the stored ID when closing
+      console.log("Evidence modal closed.");
+    }
+
+
+    // Helper functions (keep existing getActivityDescription, getStatusClass)
+    function getActivityDescription(activity) {
+      // Customize based on your activity types and data stored
+      switch (activity.type) {
+        case 'elimination-approved':
+          return `Approved report: ${activity.reporterName || '?'} eliminated ${activity.targetName || '?'}`;
+        case 'report-rejected':
+          return `Rejected report from ${activity.reporterName || '?'}`;
+        case 'target-assigned':
+          return `Assigned target ${activity.targetName || '?'} to ${activity.playerName || '?'}`;
+        case 'user-approved':
+          return `Approved new user: ${activity.playerName || activity.playerId}`;
+        case 'user-rejected':
+          return `Rejected new user: ${activity.playerName || activity.playerId}`;
+        case 'player-signup': // Add this if you log signups
+          return `New user signed up: ${activity.playerName || activity.playerId}`;
+        default:
+          return activity.type || 'Unknown action';
+      }
+    }
+
+
+    function getStatusClass(status) {
+      switch (status?.toLowerCase()) {
+        case 'approved':
+        case 'active':
+        case 'completed':
+          return 'status-active'; // Green
+        case 'pending':
+          return 'status-pending'; // Yellow/Orange
+        case 'rejected':
+        case 'eliminated':
+          return 'status-eliminated'; // Red
+        default:
+          return ''; // Default or grey
+      }
+    }
+
+  </script>
+
+
+  <div id="addPlayerModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="close-modal" onclick="hideAddPlayerModal()">×</button>
+      <h2>Add New Player</h2>
+      <form id="addPlayerForm" style="margin-top: 1rem;">
+        <div style="margin-bottom: 1rem;">
+          <label for="addFullName">Full Name:</label>
+          <input type="text" id="addFullName" required
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="addEmail">Email:</label>
+          <input type="email" id="addEmail" required
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="addInstagram">Instagram (Optional):</label>
+          <input type="text" id="addInstagram"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="addAcademy">Academy (Optional):</label>
+          <input type="text" id="addAcademy"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="text-align: right;">
+          <button type="button" class="btn" onclick="hideAddPlayerModal()" style="margin-right: 0.5rem;">Cancel</button>
+          <button type="submit" class="btn btn-primary" onclick="saveNewPlayer(event)">Save Player</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Player Modal -->
+  <div id="editPlayerModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="close-modal" onclick="hideEditPlayerModal()">×</button>
+      <h2>Edit Player</h2>
+      <form id="editPlayerForm" style="margin-top: 1rem;">
+        <!-- Correct HTML comment -->
+        <input type="hidden" id="editPlayerId"> <!-- To store the ID of the player being edited -->
+        <div style="margin-bottom: 1rem;">
+          <label for="editFullName">Full Name:</label>
+          <input type="text" id="editFullName" required
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="editEmail">Email:</label>
+          <input type="email" id="editEmail" required readonly
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; background-color: #eee;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="editInstagram">Instagram:</label>
+          <input type="text" id="editInstagram"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="editAcademy">Academy:</label>
+          <input type="text" id="editAcademy"
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="editStatus">Game Status:</label>
+          <select id="editStatus" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="active">Active</option>
+            <option value="eliminated">Eliminated</option>
+            <option value="pending">Pending Approval</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label for="editKills">Kills:</label>
+          <input type="number" id="editKills" min="0" required
+            style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div style="text-align: right;">
+          <button type="button" class="btn" onclick="hideEditPlayerModal()"
+            style="margin-right: 0.5rem;">Cancel</button>
+          <button type="submit" class="btn btn-primary" onclick="updatePlayer(event)">Update Player</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reassign Target Modal -->
+  <div id="reassignTargetModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <button class="close-modal" onclick="hideReassignTargetModal()">×</button>
+      <h2>Reassign Target for <span id="reassignPlayerName" style="font-weight: bold;">Player</span></h2>
+      <form id="reassignTargetForm" style="margin-top: 1.5rem;">
+        <input type="hidden" id="reassignPlayerId">
+        <input type="hidden" id="reassignOldTargetId"> <!-- To store the original target -->
+        <input type="hidden" id="reassignOldTargetName">
+
+        <div style="margin-bottom: 1rem;">
+          <label for="newTargetSelect" style="display: block; margin-bottom: 0.5rem;">Select New Target:</label>
+          <select id="newTargetSelect" required
+            style="width: 100%; padding: 0.75rem; border: 1px solid #ccc; border-radius: 4px; background-color: white;">
+            <option value="" disabled selected>Loading eligible targets...</option>
+            <!-- Eligible targets will be populated here by JavaScript -->
+          </select>
+          <small id="reassign-loading-error" style="color: var(--danger); display: none; margin-top: 0.5rem;">Could not
+            load targets.</small>
+        </div>
+
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <button type="button" class="btn" onclick="hideReassignTargetModal()"
+            style="margin-right: 0.5rem;">Cancel</button>
+          <button type="submit" id="saveReassignBtn" class="btn btn-primary" onclick="saveReassignedTarget(event)"
+            disabled>
+            Save New Target
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+
+function hideReassignTargetModal() {
+  const modal = document.getElementById('reassignTargetModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  // Reset form state
+  const select = document.getElementById('newTargetSelect');
+  const saveBtn = document.getElementById('saveReassignBtn');
+  const errorMsg = document.getElementById('reassign-loading-error');
+  if (select) {
+      select.innerHTML = '<option value="" disabled selected>Loading eligible targets...</option>'; // Reset dropdown
+      select.disabled = true;
+  }
+  if (saveBtn) saveBtn.disabled = true;
+   if (errorMsg) errorMsg.style.display = 'none';
+}
+
+async function showReassignTargetModal(playerId, playerName) {
+  console.log(`Opening reassign modal for: ${playerName} (${playerId})`);
+  const modal = document.getElementById('reassignTargetModal');
+  const nameSpan = document.getElementById('reassignPlayerName');
+  const idInput = document.getElementById('reassignPlayerId');
+  const oldTargetIdInput = document.getElementById('reassignOldTargetId');
+  const oldTargetNameInput = document.getElementById('reassignOldTargetName');
+  const selectDropdown = document.getElementById('newTargetSelect');
+  const saveBtn = document.getElementById('saveReassignBtn');
+  const errorMsg = document.getElementById('reassign-loading-error');
+
+
+  if (!modal || !nameSpan || !idInput || !selectDropdown || !saveBtn || !errorMsg || !oldTargetIdInput || !oldTargetNameInput) {
+    console.error("Reassign Target Modal elements missing!");
+    alert("Error: Could not open target reassignment dialog.");
+    return;
+  }
+
+  // Reset and show loading state
+  nameSpan.textContent = playerName;
+  idInput.value = playerId;
+  oldTargetIdInput.value = ''; // Clear previous values
+  oldTargetNameInput.value = '';
+  selectDropdown.innerHTML = '<option value="" disabled selected>Loading eligible targets...</option>';
+  selectDropdown.disabled = true;
+  saveBtn.disabled = true;
+  errorMsg.style.display = 'none';
+  modal.style.display = 'flex'; // Show modal
+
+  try {
+    // 1. Get the player's current target (for reference and to exclude)
+    let currentTargetId = null;
+    const playerAssignDoc = await db.collection('targets').doc(playerId).get();
+    if (playerAssignDoc.exists) {
+        currentTargetId = playerAssignDoc.data().targetId;
+        oldTargetIdInput.value = currentTargetId || ''; // Store old target ID
+        oldTargetNameInput.value = playerAssignDoc.data().targetName || ''; // Store old target name
+        console.log(`Current target is: ${currentTargetId}`);
+    } else {
+         console.log(`No current target assignment found for ${playerName}`);
+    }
+
+
+    // 2. Fetch all active, approved players to populate the dropdown
+    const playersSnapshot = await db.collection('players')
+      .where('status', '==', 'active')
+      .where('approvalStatus', '==', 'approved')
+      .get();
+
+    selectDropdown.innerHTML = '<option value="" disabled selected>Select New Target...</option>'; // Set default prompt
+    let eligibleCount = 0;
+
+    if (playersSnapshot.empty) {
+      console.warn("No active/approved players found.");
+    } else {
+      playersSnapshot.forEach(doc => {
+        const potentialTargetId = doc.id;
+        const potentialTarget = doc.data();
+
+        // Add player to dropdown IF:
+        // - They are not the player being reassigned (playerId)
+        // - They are not the player's CURRENT target (currentTargetId) - Optional, but prevents assigning same target again
+        if (potentialTargetId !== playerId && potentialTargetId !== currentTargetId) {
+          const option = document.createElement('option');
+          option.value = potentialTargetId;
+          // Include email or short ID for clarity if names aren't unique
+          option.textContent = `${potentialTarget.fullName || 'Unknown Name'} (${potentialTarget.email || potentialTargetId.substring(0,6)+'...' })`;
+          option.dataset.academy = potentialTarget.academy || ''; // Store extra data
+          option.dataset.instagram = potentialTarget.instagram || '';
+          selectDropdown.appendChild(option);
+          eligibleCount++;
+        }
+      });
+    }
+
+    // 3. Enable dropdown and save button if targets are available
+    if (eligibleCount > 0) {
+      selectDropdown.disabled = false;
+      saveBtn.disabled = false; // Enable save only if there are options
+       console.log(`Populated dropdown with ${eligibleCount} eligible targets.`);
+    } else {
+      selectDropdown.innerHTML = '<option value="" disabled selected>No eligible targets found</option>';
+      console.warn("No eligible targets found to reassign.");
+       // Keep save button disabled
+    }
+
+  } catch (error) {
+    console.error("Error fetching eligible targets:", error);
+    errorMsg.textContent = `Error loading targets: ${error.message}`;
+    errorMsg.style.display = 'block';
+    selectDropdown.innerHTML = '<option value="" disabled selected>Error loading targets</option>';
+    selectDropdown.disabled = true;
+    saveBtn.disabled = true;
+  }
+}
+
+
+async function saveReassignedTarget(event) {
+  event.preventDefault();
+  const playerId = document.getElementById('reassignPlayerId').value;
+  const selectDropdown = document.getElementById('newTargetSelect');
+  const newTargetId = selectDropdown.value;
+  const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
+
+  // Get old target info for logging
+  const oldTargetId = document.getElementById('reassignOldTargetId').value || null;
+  const oldTargetName = document.getElementById('reassignOldTargetName').value || 'None';
+
+
+  if (!playerId || !newTargetId) {
+    alert('Please select a valid new target.');
+    return;
+  }
+
+  // Extract new target details from selected option or fetch if needed
+  const newTargetName = selectedOption.textContent.split(' (')[0]; // Get name part
+  const newTargetAcademy = selectedOption.dataset.academy || null;
+  const newTargetInstagram = selectedOption.dataset.instagram || null;
+
+
+  console.log(`Reassigning target for player ${playerId} to ${newTargetName} (${newTargetId})`);
+  const saveButton = document.getElementById('saveReassignBtn');
+  saveButton.disabled = true;
+  saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+  // Firestore References
+  const playerRef = db.collection('players').doc(playerId);
+  const playerTargetAssignmentRef = db.collection('targets').doc(playerId);
+  const activityRef = db.collection('activity').doc();
+  const batch = db.batch(); // Use batch for simplicity here
+  const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+  try {
+      // Fetch current player name (needed for targets collection update)
+       const playerDoc = await playerRef.get();
+       const playerName = playerDoc.exists ? playerDoc.data().fullName : 'Unknown Player';
+
+
+    // 1. Update the Player document in 'players' collection
+    batch.update(playerRef, {
+      targetId: newTargetId,
+      targetName: newTargetName,
+      targetAcademy: newTargetAcademy,
+      targetInstagram: newTargetInstagram,
+      status: 'active' // Ensure player remains active
+    });
+
+    // 2. Update the Player's entry in the 'targets' collection
+    // Use set with merge to ensure it creates/updates the document
+    batch.set(playerTargetAssignmentRef, {
+      playerId: playerId, // Redundant but good for consistency
+      playerName: playerName, // Make sure we have the player's name
+      targetId: newTargetId,
+      targetName: newTargetName,
+      targetAcademy: newTargetAcademy,
+      targetInstagram: newTargetInstagram,
+      status: 'active', // Ensure target assignment is active
+      assignedAt: timestamp // Update assignment time
+    }, { merge: true });
+
+    // 3. Log the Activity
+    batch.set(activityRef, {
+      type: 'target-reassigned-admin',
+      adminId: currentAdmin?.uid || 'unknown',
+      playerId: playerId,
+      playerName: playerName,
+      oldTargetId: oldTargetId,
+      oldTargetName: oldTargetName,
+      newTargetId: newTargetId,
+      newTargetName: newTargetName,
+      timestamp: timestamp,
+      status: 'completed'
+    });
+
+    // 4. Commit the batch
+    await batch.commit();
+    alert(`Successfully reassigned target for ${playerName} to ${newTargetName}.`);
+    hideReassignTargetModal();
+    // The listener on loadTargets should redraw the table automatically
+
+  } catch (error) {
+    console.error("Error saving reassigned target:", error);
+    alert(`Failed to reassign target: ${error.message}`);
+  } finally {
+    // Re-enable button
+    saveButton.disabled = false; // Re-enable even on failure if modal isn't closed
+    saveButton.innerHTML = 'Save New Target';
+  }
+}
+
+    // --- Add Player Modal Functions ---
+    function showAddPlayerModal() {
+      const modal = document.getElementById('addPlayerModal');
+      const form = document.getElementById('addPlayerForm');
+      if (!modal || !form) {
+        console.error("Add Player Modal or Form element not found!");
+        alert("Error: Add Player dialog could not be opened.");
+        return;
+      }
+      try {
+        form.reset(); // Clear form
+        modal.style.display = 'flex';
+      } catch (e) {
+        console.error("Error showing add player modal:", e);
+        alert("Error opening Add Player dialog.");
+      }
+    }
+
+    function hideAddPlayerModal() {
+      const modal = document.getElementById('addPlayerModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    async function saveNewPlayer(event) {
+      event.preventDefault();
+      const fullNameInput = document.getElementById('addFullName');
+      const emailInput = document.getElementById('addEmail');
+      const instagramInput = document.getElementById('addInstagram');
+      const academyInput = document.getElementById('addAcademy');
+
+      if (!fullNameInput || !emailInput || !instagramInput || !academyInput) {
+        alert("Error: Cannot find form fields to add player.");
+        return;
+      }
+
+      const fullName = fullNameInput.value.trim();
+      const email = emailInput.value.trim();
+      const instagram = instagramInput.value.trim();
+      const academy = academyInput.value.trim();
+
+      if (!fullName || !email) { alert('Full Name and Email are required.'); return; }
+      if (!/^\S+@\S+\.\S+$/.test(email)) { alert('Please enter a valid email address.'); return; }
+
+      console.log(`Attempting to add player: ${fullName} (${email})`);
+      const addButton = event.target;
+      addButton.disabled = true;
+      addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      const playerRef = db.collection('players').doc();
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc();
+      const batch = db.batch();
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        batch.set(playerRef, {
+          uid: playerRef.id, fullName: fullName, email: email,
+          instagram: instagram || null, academy: academy || null,
+          status: 'active', approvalStatus: 'approved', kills: 0,
+          targetId: null, targetName: null, createdAt: timestamp,
+        });
+        batch.set(statsRef, {
+          totalPlayers: firebase.firestore.FieldValue.increment(1),
+          activePlayers: firebase.firestore.FieldValue.increment(1)
+        }, { merge: true });
+        batch.set(activityRef, {
+          type: 'player-added-admin', adminId: currentAdmin?.uid || 'unknown',
+          playerId: playerRef.id, playerName: fullName, timestamp: timestamp, status: 'completed'
+        });
+        await batch.commit();
+        alert(`Player "${fullName}" added successfully!`);
+        hideAddPlayerModal();
+      } catch (error) {
+        console.error("Error adding player:", error);
+        alert(`Failed to add player: ${error.message}`);
+      } finally {
+        addButton.disabled = false;
+        addButton.innerHTML = 'Save Player';
+      }
+    }
+
+    // --- Edit Player Modal Functions ---
+    async function showEditPlayerModal(playerId) {
+      console.log(`Editing player: ${playerId}`);
+      const modal = document.getElementById('editPlayerModal');
+      const form = document.getElementById('editPlayerForm');
+      if (!modal || !form) {
+        console.error("Edit Player Modal or Form element not found!");
+        alert("Error: Edit Player dialog could not be opened.");
+        return;
+      }
+      form.reset();
+
+      try {
+        const playerDoc = await db.collection('players').doc(playerId).get();
+        if (!playerDoc.exists) { alert('Player not found!'); return; }
+        const player = playerDoc.data();
+
+        const idInput = document.getElementById('editPlayerId');
+        const nameInput = document.getElementById('editFullName');
+        const emailInput = document.getElementById('editEmail');
+        const instaInput = document.getElementById('editInstagram');
+        const academyInput = document.getElementById('editAcademy');
+        const statusSelect = document.getElementById('editStatus');
+        const killsInput = document.getElementById('editKills');
+
+        if (!idInput || !nameInput || !emailInput || !instaInput || !academyInput || !statusSelect || !killsInput) {
+          throw new Error("One or more edit form fields are missing in the HTML.");
+        }
+
+        idInput.value = playerId;
+        nameInput.value = player.fullName || '';
+        emailInput.value = player.email || '';
+        instaInput.value = player.instagram || '';
+        academyInput.value = player.academy || '';
+        statusSelect.value = player.status || 'active';
+        killsInput.value = player.kills || 0;
+
+        modal.style.display = 'flex';
+      } catch (error) {
+        console.error("Error fetching player for edit:", error);
+        alert(`Failed to load player data: ${error.message}`);
+      }
+    }
+
+    function hideEditPlayerModal() {
+      const modal = document.getElementById('editPlayerModal');
+      if (modal) { modal.style.display = 'none'; }
+    }
+
+    async function updatePlayer(event) {
+      event.preventDefault();
+      const playerIdInput = document.getElementById('editPlayerId');
+      if (!playerIdInput) { alert("Error: Player ID field missing."); return; }
+      const playerId = playerIdInput.value;
+      if (!playerId) { alert('Player ID missing. Cannot update.'); return; }
+
+      const fullNameInput = document.getElementById('editFullName');
+      const instagramInput = document.getElementById('editInstagram');
+      const academyInput = document.getElementById('editAcademy');
+      const statusSelect = document.getElementById('editStatus');
+      const killsInput = document.getElementById('editKills');
+
+      if (!fullNameInput || !instagramInput || !academyInput || !statusSelect || !killsInput) {
+        alert("Error: Cannot find form fields to update player."); return;
+      }
+
+      const updatedData = {
+        fullName: fullNameInput.value.trim(),
+        instagram: instagramInput.value.trim() || null,
+        academy: academyInput.value.trim() || null,
+        status: statusSelect.value,
+        kills: parseInt(killsInput.value, 10) || 0,
+      };
+
+      if (!updatedData.fullName) { alert('Full Name cannot be empty.'); return; }
+      if (isNaN(updatedData.kills) || updatedData.kills < 0) { alert('Kills must be a non-negative number.'); return; }
+
+      console.log(`Attempting to update player: ${playerId}`);
+      const updateButton = event.target;
+      updateButton.disabled = true;
+      updateButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+      const playerRef = db.collection('players').doc(playerId);
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc();
+      const batch = db.batch();
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        const playerDocBefore = await playerRef.get();
+        if (!playerDocBefore.exists) throw new Error("Player disappeared before update!");
+        const statusBefore = playerDocBefore.data().status;
+        const approvalStatusBefore = playerDocBefore.data().approvalStatus;
+        const statusAfter = updatedData.status;
+
+        let activePlayerChange = 0;
+        const wasEffectivelyActive = (statusBefore === 'active' && approvalStatusBefore === 'approved');
+        const isEffectivelyActive = (statusAfter === 'active' && approvalStatusBefore === 'approved');
+
+        if (wasEffectivelyActive && !isEffectivelyActive) { activePlayerChange = -1; }
+        else if (!wasEffectivelyActive && isEffectivelyActive) { activePlayerChange = 1; }
+
+        batch.update(playerRef, { ...updatedData, updatedAt: timestamp });
+
+        if (activePlayerChange !== 0) {
+          batch.set(statsRef, { activePlayers: firebase.firestore.FieldValue.increment(activePlayerChange) }, { merge: true });
+        }
+        batch.set(activityRef, {
+          type: 'player-edited-admin', adminId: currentAdmin?.uid || 'unknown', playerId: playerId,
+          playerName: updatedData.fullName, changes: updatedData,
+          statusChange: { from: statusBefore, to: statusAfter }, timestamp: timestamp, status: 'completed'
+        });
+        await batch.commit();
+        alert(`Player "${updatedData.fullName}" updated successfully!`);
+        hideEditPlayerModal();
+      } catch (error) {
+        console.error("Error updating player:", error);
+        alert(`Failed to update player: ${error.message}`);
+      } finally {
+        updateButton.disabled = false;
+        updateButton.innerHTML = 'Update Player';
+      }
+    }
+
+    // --- Delete Player Function ---
+    async function deletePlayer(playerId, playerName) {
+      if (!confirm(`ARE YOU ABSOLUTELY SURE you want to delete player "${playerName}" (${playerId})?\n\nThis action is IRREVERSIBLE and will remove their data entirely. Consider 'Eliminating' them first if they were part of the game.`)) { return; }
+      if (!confirm(`FINAL CONFIRMATION: Delete "${playerName}"? All associated data will be lost.`)) { return; }
+
+      console.log(`Attempting to delete player: ${playerName} (${playerId})`);
+
+      const playerRef = db.collection('players').doc(playerId);
+      const targetAssignmentRef = db.collection('targets').doc(playerId);
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc();
+      const batch = db.batch();
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        const playerDoc = await playerRef.get();
+        if (!playerDoc.exists) { alert("Player already deleted or not found."); return; }
+        const playerData = playerDoc.data();
+        const wasActive = playerData.status === 'active';
+        const wasApproved = playerData.approvalStatus === 'approved';
+        const wasPending = playerData.approvalStatus === 'pending';
+        const wasRejected = playerData.approvalStatus === 'rejected';
+
+        batch.delete(playerRef);
+        batch.delete(targetAssignmentRef);
+
+        let totalDecrement = 0; let activeDecrement = 0;
+        if (wasRejected) { totalDecrement = 0; activeDecrement = 0; }
+        else if (wasPending) { totalDecrement = -1; activeDecrement = 0; }
+        else if (wasApproved) {
+          totalDecrement = -1; activeDecrement = wasActive ? -1 : 0;
+        } else {
+          console.warn(`Player ${playerId} had unexpected approvalStatus: ${playerData.approvalStatus}. Decrementing total.`);
+          totalDecrement = -1; activeDecrement = 0;
+        }
+
+        if (totalDecrement !== 0 || activeDecrement !== 0) {
+          const statsUpdate = {};
+          if (totalDecrement !== 0) statsUpdate.totalPlayers = firebase.firestore.FieldValue.increment(totalDecrement);
+          if (activeDecrement !== 0) statsUpdate.activePlayers = firebase.firestore.FieldValue.increment(activeDecrement);
+          batch.set(statsRef, statsUpdate, { merge: true });
+        }
+
+        batch.set(activityRef, {
+          type: 'player-deleted-admin', adminId: currentAdmin?.uid || 'unknown', playerId: playerId,
+          playerName: playerName, previousStatus: playerData.status, previousApprovalStatus: playerData.approvalStatus,
+          timestamp: timestamp, status: 'completed'
+        });
+
+        // --- Handle Target Chain ---
+        console.log(`Deleting player ${playerName}. Checking target chain...`);
+        const huntersSnap = await db.collection('targets').where('targetId', '==', playerId).get();
+        if (!huntersSnap.empty) {
+          for (const hunterDoc of huntersSnap.docs) {
+            const hunterId = hunterDoc.id;
+            const hunterData = hunterDoc.data();
+            const hunterName = hunterData.playerName || hunterId;
+            if (hunterData.status === 'active') {
+              console.log(`Clearing target for active hunter ${hunterName} (${hunterId}).`);
+              const hunterTargetRef = db.collection('targets').doc(hunterId);
+              const hunterPlayerRef = db.collection('players').doc(hunterId);
+              batch.update(hunterTargetRef, { targetId: null, targetName: 'None (Target Deleted)', status: 'inactive', assignedAt: timestamp });
+              batch.update(hunterPlayerRef, { targetId: null, targetName: 'None (Target Deleted)' });
+              const clearLogRef = db.collection('activity').doc();
+              batch.set(clearLogRef, {
+                type: 'target-cleared-admin-delete', adminId: currentAdmin?.uid || 'system',
+                playerId: hunterId, playerName: hunterName, deletedTargetId: playerId,
+                deletedTargetName: playerName, timestamp: timestamp, status: 'completed'
+              });
+            } else { console.log(`Hunter ${hunterName} not active, skipping target clear.`); }
+          }
+        } else { console.log(`No active players were targeting ${playerName}.`); }
+        // --- End Target Chain ---
+
+        await batch.commit();
+        alert(`Player "${playerName}" deleted successfully!`);
+      } catch (error) {
+        console.error(`Error deleting player ${playerId}:`, error);
+        alert(`Failed to delete player: ${error.message}`);
+      }
+    }
+
+    // --- Eliminate Player Function ---
+    async function eliminatePlayer(playerId, playerName) {
+      if (!confirm(`MANUALLY ELIMINATE "${playerName}" (${playerId})?\n\nThis marks them eliminated and attempts target reassignment.`)) { return; }
+      console.log(`Attempting to manually eliminate player: ${playerName} (${playerId})`);
+
+      const playerRef = db.collection('players').doc(playerId);
+      const targetAssignmentRef = db.collection('targets').doc(playerId);
+      const statsRef = db.collection('stats').doc('current');
+      const activityRef = db.collection('activity').doc();
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        // --- Pre-Transaction: Find the Active Hunter ---
+        let hunterId = null, hunterName = null, hunterTargetAssignmentRef = null, hunterPlayerRef = null, hunterIsActive = false;
+        const huntersSnap = await db.collection('targets').where('targetId', '==', playerId).limit(1).get();
+        if (!huntersSnap.empty) {
+          const hunterDoc = huntersSnap.docs[0]; const hunterData = hunterDoc.data();
+          if (hunterData.status === 'active') {
+            hunterId = hunterDoc.id; hunterName = hunterData.playerName || hunterId;
+            hunterTargetAssignmentRef = db.collection('targets').doc(hunterId);
+            hunterPlayerRef = db.collection('players').doc(hunterId); hunterIsActive = true;
+            console.log(`Found active hunter: ${hunterName} (${hunterId}).`);
+          } else { console.log(`Hunter ${hunterData.playerName || hunterDoc.id} not active. Target won't be reassigned.`); }
+        } else { console.log(`No player found targeting ${playerName}. Target won't be reassigned.`); }
+        // --- End Pre-Transaction Hunter Find ---
+
+        const resultData = await db.runTransaction(async (transaction) => {
+          const playerDoc = await transaction.get(playerRef);
+          if (!playerDoc.exists) throw new Error("Player to eliminate not found.");
+          const playerData = playerDoc.data();
+          if (playerData.status !== 'active' || playerData.approvalStatus !== 'approved') {
+            throw new Error(`Player "${playerName}" not active/approved (Status: ${playerData.status}, Approval: ${playerData.approvalStatus}).`);
+          }
+
+          const eliminatedTargetAssignmentDoc = await transaction.get(targetAssignmentRef);
+          const eliminatedAssignmentData = eliminatedTargetAssignmentDoc.exists ? eliminatedTargetAssignmentDoc.data() : {};
+          const nextTargetId = eliminatedAssignmentData.targetId || null;
+          const nextTargetName = eliminatedAssignmentData.targetName || null;
+          const nextTargetAcademy = eliminatedAssignmentData.targetAcademy || null;
+          const nextTargetInstagram = eliminatedAssignmentData.targetInstagram || null;
+          console.log(`Eliminated player had target: ${nextTargetName || 'None'}`);
+
+          // Update Eliminated Player ('players' & 'targets')
+          transaction.update(playerRef, { status: 'eliminated', eliminatedByAdmin: true, eliminatedAt: timestamp, targetId: null, targetName: null, targetAcademy: null, targetInstagram: null });
+          transaction.set(targetAssignmentRef, { status: 'eliminated', targetId: null, targetName: null, targetAcademy: null, targetInstagram: null, eliminatedAt: timestamp }, { merge: true });
+
+          // Update Active Hunter's Target (if found)
+          if (hunterIsActive && hunterTargetAssignmentRef && hunterPlayerRef) {
+            console.log(`Assigning target ${nextTargetName || 'None'} to active hunter ${hunterName}.`);
+            transaction.update(hunterTargetAssignmentRef, { targetId: nextTargetId, targetName: nextTargetName, targetAcademy: nextTargetAcademy, targetInstagram: nextTargetInstagram, status: nextTargetId ? 'active' : 'inactive', assignedAt: timestamp });
+            transaction.update(hunterPlayerRef, { targetId: nextTargetId, targetName: nextTargetName, targetAcademy: nextTargetAcademy, targetInstagram: nextTargetInstagram });
+          }
+
+          // Update Stats
+          transaction.set(statsRef, { activePlayers: firebase.firestore.FieldValue.increment(-1), totalEliminations: firebase.firestore.FieldValue.increment(1) }, { merge: true });
+
+          // Log Activity
+          transaction.set(activityRef, {
+            type: 'player-eliminated-admin', adminId: currentAdmin?.uid || 'unknown',
+            eliminatedPlayerId: playerId, eliminatedPlayerName: playerName,
+            hunterPlayerId: hunterIsActive ? hunterId : null, hunterPlayerName: hunterIsActive ? hunterName : null,
+            newTargetIdForHunter: hunterIsActive ? nextTargetId : null, newTargetNameForHunter: hunterIsActive ? nextTargetName : null,
+            timestamp: timestamp, status: 'completed'
+          });
+          return { hunterAssigned: hunterIsActive, hunterName: hunterName, newTargetName: nextTargetName };
+        });
+
+        const alertMsg = `Player "${playerName}" eliminated successfully!`;
+        const assignmentMsg = resultData.hunterAssigned ? `Their target "${resultData.newTargetName || 'None'}" was passed to ${resultData.hunterName}.` : 'No active hunter found to reassign target to.';
+        alert(`${alertMsg} ${assignmentMsg}`);
+      } catch (error) {
+        console.error(`Error eliminating player ${playerId}:`, error);
+        alert(`Failed to eliminate player: ${error.message}`);
+      }
+    }
+
+    function logout() {
+      console.log("Logging out, stopping all listeners...");
+      stopAllListeners();
+      auth.signOut().then(() => {
+        console.log("User signed out successfully.");
+        window.location.href = 'index.html';
+      }).catch(error => {
+        console.error("Logout error:", error);
+        alert("Error during sign out, redirecting...");
+        window.location.href = 'index.html';
+      });
+    }
+
+    window.addEventListener('beforeunload', (event) => {
+      console.log("Page unloading, stopping all listeners...");
+      stopAllListeners();
+    });
+
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Senior Assassin | Home</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #32b1b1;
+      --secondary: #000000;
+      --accent: #ffffff;
+      --dark: #333333;
+      --light: #f5f5f5;
+    }
+
+    html {
+      overflow-x: hidden;
+    }
+
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: var(--secondary);
+      min-height: 100vh;
+      color: var(--light);
+    }
+
+    header {
+      width: 100%;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      background-color: rgba(45, 52, 54, 0.7);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #background-video {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -100;
+      object-fit: cover;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--light);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--light);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .nav-links a:hover {
+      color: var(--accent);
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -5px;
+      left: 0;
+      background-color: var(--accent);
+      transition: width 0.3s ease;
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-links a.active {
+      color: var(--accent);
+    }
+
+    .nav-links a.active::after {
+      width: 100%;
+    }
+
+    .nav-links a.cta-button {
+      background: var(--accent);
+      color: var(--dark);
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 600;
+    }
+
+    .nav-links a.cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(253, 121, 168, 0.4);
+    }
+
+    .nav-links a.cta-button::after {
+      display: none;
+    }
+
+    #mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 6rem 2rem 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .hero h1 {
+      font-size: 4rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(to right, var(--light), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      opacity: 0.9;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: var(--accent);
+      color: var(--dark);
+      padding: 1rem 2.5rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-top: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2.5rem;
+      }
+
+      #mobile-menu-toggle {
+        display: block;
+      }
+
+      .nav-links {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        width: 100%;
+        background: var(--dark);
+        flex-direction: column;
+        padding: 1rem 0;
+        gap: 1rem;
+        transform: translateY(-150%);
+        transition: transform 0.3s ease;
+      }
+
+      .nav-links.active {
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <video autoplay loop muted playsinline id="background-video">
+    <source
+      src="https://firebasestorage.googleapis.com/v0/b/vapa-senior-assassin.firebasestorage.app/o/CortinesBannerVideo-480p.mp4?alt=media&token=22be5cc8-b732-45c8-8d45-4409f8a9d909"
+      type="video/mp4">
+  </video>
+
+  <header>
+    <button id="mobile-menu-toggle">
+      <i class="fas fa-bars"></i>
+    </button>
+    <a href="index.html" class="logo">Senior<span>Assassin</span></a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="rules.html">Rules</a>
+      <a href="leaderboard.html">Leaderboard</a>
+      <a href="login.html" class="cta-button">Login</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <h1>Class of 2025 Senior Assassin </h1>
+      <p>Register, read the rules, and get prepared for VAPA's Senior Assassin. Featuring: Live leaderboards, active
+        admins, and one massive cash prize. </p>
+      <a href="login.html" class="btn">Get Started</a>
+    </section>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBXIYp8MFRivErUtdMJFaaxq4P1MbG1FgM",
+      authDomain: "vapa-senior-assassin.firebaseapp.com",
+      projectId: "vapa-senior-assassin",
+      storageBucket: "vapa-senior-assassin.appspot.com",
+      messagingSenderId: "455341197665",
+      appId: "1:455341197665:web:63881fd6b7d693a9865d20",
+      measurementId: "G-7KN3VT384R"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Mobile menu toggle
+    document.getElementById('mobile-menu-toggle').addEventListener('click', () => {
+      document.getElementById('nav-links').classList.toggle('active');
+    });
+
+    // Check auth state to update login button
+    auth.onAuthStateChanged(user => {
+      const loginBtn = document.querySelector('.nav-links a.cta-button');
+      if (user) {
+        loginBtn.textContent = 'Profile';
+        loginBtn.href = 'profile.html';
+      } else {
+        loginBtn.textContent = 'Login';
+        loginBtn.href = 'login.html';
+      }
+    });
+
+    // Highlight current page
+    const currentPage = window.location.pathname.split('/').pop();
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      if (link.getAttribute('href') === currentPage) {
+        link.classList.add('active');
+      }
+    });
+
+    const bodyElement = document.body;
+    const primaryColor = getComputedStyle(bodyElement).getPropertyValue('--primary').trim() || '#32b1b1';
+    const secondaryColor = getComputedStyle(bodyElement).getPropertyValue('--secondary').trim() || '#000000';
+
+    const SMOOTHING_FACTOR = 0.08;
+    const GRADIENT_END_PRIMARY = '15%'; // Primary color fully visible up to 15% radius
+    const GRADIENT_START_SECONDARY = '80%'; // Secondary color starts becoming dominant from 80% radius
+
+    let targetMouseX = window.innerWidth / 2;
+    let targetMouseY = window.innerHeight / 2;
+    let currentGradientX = window.innerWidth / 2;
+    let currentGradientY = window.innerHeight / 2;
+    let animationFrameId = null;
+
+    function updateTargetPosition(event) {
+      targetMouseX = event.clientX;
+      targetMouseY = event.clientY;
+      if (!animationFrameId) {
+        startAnimationLoop();
+      }
+    }
+
+    function animateGradient() {
+      const dx = targetMouseX - currentGradientX;
+      const dy = targetMouseY - currentGradientY;
+
+      currentGradientX += dx * SMOOTHING_FACTOR;
+      currentGradientY += dy * SMOOTHING_FACTOR;
+
+      const xPercent = (currentGradientX / window.innerWidth) * 100;
+      const yPercent = (currentGradientY / window.innerHeight) * 100;
+
+      const gradientStyle = `radial-gradient(
+            circle at ${xPercent}% ${yPercent}%,
+            ${primaryColor} ${GRADIENT_END_PRIMARY},
+            ${secondaryColor} ${GRADIENT_START_SECONDARY}
+        )`;
+
+      bodyElement.style.background = gradientStyle;
+
+      if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      } else {
+        animationFrameId = null;
+      }
+    }
+
+    function startAnimationLoop() {
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(animateGradient);
+      }
+    }
+
+    document.addEventListener('mousemove', updateTargetPosition);
+
+    const initialXPercent = 50;
+    const initialYPercent = 50;
+    const initialGradient = `radial-gradient(circle at ${initialXPercent}% ${initialYPercent}%, ${primaryColor} ${GRADIENT_END_PRIMARY}, ${secondaryColor} ${GRADIENT_START_SECONDARY})`;
+    bodyElement.style.background = initialGradient;
+    startAnimationLoop();
+
+  </script>
+</body>
+
+</html>
