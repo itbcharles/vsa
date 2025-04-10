@@ -1055,7 +1055,6 @@
                 user.email.substring(0, 2).toUpperCase();
             initDashboard(); // Load initial view
             setupNavigation(); // Setup sidebar clicks
-            (); // Load players initially for the default view if it includes the player table
           }
         }).catch(error => {
           console.error("Admin check error:", error);
@@ -1110,7 +1109,6 @@
               initDashboard();
               break;
             case 'players':
-              ();
               break;
             case 'targets':
               loadTargets();
@@ -1188,7 +1186,6 @@
             initDashboard();
             break;
           case 'players':
-            ();
             break;
           case 'targets':
             loadTargets();
@@ -1299,7 +1296,8 @@
         console.error("Element 'playersTable' not found.");
         return;
       }
-      tbody.innerHTML = '<tr><td colspan="5" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading players...</td></tr>';
+      // --- Update Colspan Here ---
+      tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><i class="fas fa-spinner fa-spin"></i> Loading players...</td></tr>';
 
       if (window.playersListener) {
         console.log("Stopping existing players listener before attaching new one.");
@@ -1328,7 +1326,8 @@
             currentTbody.innerHTML = ''; // Clear existing rows - THIS IS CRUCIAL
 
             if (snap.empty) {
-              currentTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:2rem; color:#6c757d;">No players found.</td></tr>`;
+              // --- Update Colspan Here ---
+              currentTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:2rem; color:#6c757d;">No players found.</td></tr>`;
               return;
             }
 
@@ -1336,6 +1335,20 @@
               const player = doc.data();
               const playerId = doc.id;
               const playerName = player.fullName || 'Unknown';
+
+              // --- Get Instagram Handle ---
+              const instagramHandle = player.instagram;
+              let instagramDisplay = 'N/A'; // Default display
+              if (instagramHandle) {
+                // Remove leading '@' if present for the link URL, but display it
+                const handleClean = instagramHandle.startsWith('@') ? instagramHandle.substring(1) : instagramHandle;
+                // Prevent potential XSS if handle contains HTML/JS (unlikely but safer)
+                const handleEscaped = handleClean.replace(/</g, "<").replace(/>/g, ">");
+                if (handleEscaped) { // Ensure handle is not empty after cleaning
+                  instagramDisplay = `<a href="https://instagram.com/${handleEscaped}" target="_blank" title="View @${handleEscaped} on Instagram">@${handleEscaped}</a>`;
+                }
+              }
+              // --- End Instagram Handle ---
 
               let approvalStatusText = player.approvalStatus || 'unknown';
               let approvalStatusClass = getApprovalStatusClass(approvalStatusText);
@@ -1363,10 +1376,12 @@
           `;
 
               // Use currentTbody reference here
+              // --- Add the new Instagram TD element ---
               currentTbody.innerHTML += `
             <tr>
                 <td>${playerName}</td>
                 <td>${player.email || 'No email'}</td>
+                <td>${instagramDisplay}</td> <!-- Added Instagram Data Cell -->
                 <td>
                     <span class="status-badge ${approvalStatusClass}" title="Approval: ${approvalStatusText}">${approvalStatusText.charAt(0).toUpperCase() + approvalStatusText.slice(1)}</span>
                     <span class="status-badge ${gameStatusClass}" title="Game: ${gameStatusText}">${gameStatusText.charAt(0).toUpperCase() + gameStatusText.slice(1)}</span>
@@ -1380,7 +1395,8 @@
             console.error("Players listener error:", error);
             const errorTbody = document.getElementById('playersTable');
             if (errorTbody) {
-              errorTbody.innerHTML = `<tr><td colspan="5" class="error-state"><i class="fas fa-exclamation-circle"></i> Error loading players</td></tr>`;
+              // --- Update Colspan Here ---
+              errorTbody.innerHTML = `<tr><td colspan="6" class="error-state"><i class="fas fa-exclamation-circle"></i> Error loading players</td></tr>`;
             }
             // Attempt to stop listener on error
             if (window.playersListener) {
@@ -1390,10 +1406,11 @@
           });
       } catch (error) {
         console.error("Failed to attach players listener:", error);
-        tbody.innerHTML = `<tr><td colspan="5" class="error-state"><i class="fas fa-exclamation-circle"></i> Failed to start players listener</td></tr>`;
+        // --- Update Colspan Here ---
+        tbody.innerHTML = `<tr><td colspan="6" class="error-state"><i class="fas fa-exclamation-circle"></i> Failed to start players listener</td></tr>`;
       }
     }
-
+    
     function getApprovalStatusClass(status) {
       switch (status) {
         case 'approved': return 'status-active'; // Use success style
@@ -2391,212 +2408,212 @@
 
   <script>
 
-function hideReassignTargetModal() {
-  const modal = document.getElementById('reassignTargetModal');
-  if (modal) {
-    modal.style.display = 'none';
-  }
-  // Reset form state
-  const select = document.getElementById('newTargetSelect');
-  const saveBtn = document.getElementById('saveReassignBtn');
-  const errorMsg = document.getElementById('reassign-loading-error');
-  if (select) {
-      select.innerHTML = '<option value="" disabled selected>Loading eligible targets...</option>'; // Reset dropdown
-      select.disabled = true;
-  }
-  if (saveBtn) saveBtn.disabled = true;
-   if (errorMsg) errorMsg.style.display = 'none';
-}
-
-async function showReassignTargetModal(playerId, playerName) {
-  console.log(`Opening reassign modal for: ${playerName} (${playerId})`);
-  const modal = document.getElementById('reassignTargetModal');
-  const nameSpan = document.getElementById('reassignPlayerName');
-  const idInput = document.getElementById('reassignPlayerId');
-  const oldTargetIdInput = document.getElementById('reassignOldTargetId');
-  const oldTargetNameInput = document.getElementById('reassignOldTargetName');
-  const selectDropdown = document.getElementById('newTargetSelect');
-  const saveBtn = document.getElementById('saveReassignBtn');
-  const errorMsg = document.getElementById('reassign-loading-error');
-
-
-  if (!modal || !nameSpan || !idInput || !selectDropdown || !saveBtn || !errorMsg || !oldTargetIdInput || !oldTargetNameInput) {
-    console.error("Reassign Target Modal elements missing!");
-    alert("Error: Could not open target reassignment dialog.");
-    return;
-  }
-
-  // Reset and show loading state
-  nameSpan.textContent = playerName;
-  idInput.value = playerId;
-  oldTargetIdInput.value = ''; // Clear previous values
-  oldTargetNameInput.value = '';
-  selectDropdown.innerHTML = '<option value="" disabled selected>Loading eligible targets...</option>';
-  selectDropdown.disabled = true;
-  saveBtn.disabled = true;
-  errorMsg.style.display = 'none';
-  modal.style.display = 'flex'; // Show modal
-
-  try {
-    // 1. Get the player's current target (for reference and to exclude)
-    let currentTargetId = null;
-    const playerAssignDoc = await db.collection('targets').doc(playerId).get();
-    if (playerAssignDoc.exists) {
-        currentTargetId = playerAssignDoc.data().targetId;
-        oldTargetIdInput.value = currentTargetId || ''; // Store old target ID
-        oldTargetNameInput.value = playerAssignDoc.data().targetName || ''; // Store old target name
-        console.log(`Current target is: ${currentTargetId}`);
-    } else {
-         console.log(`No current target assignment found for ${playerName}`);
+    function hideReassignTargetModal() {
+      const modal = document.getElementById('reassignTargetModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      // Reset form state
+      const select = document.getElementById('newTargetSelect');
+      const saveBtn = document.getElementById('saveReassignBtn');
+      const errorMsg = document.getElementById('reassign-loading-error');
+      if (select) {
+        select.innerHTML = '<option value="" disabled selected>Loading eligible targets...</option>'; // Reset dropdown
+        select.disabled = true;
+      }
+      if (saveBtn) saveBtn.disabled = true;
+      if (errorMsg) errorMsg.style.display = 'none';
     }
 
+    async function showReassignTargetModal(playerId, playerName) {
+      console.log(`Opening reassign modal for: ${playerName} (${playerId})`);
+      const modal = document.getElementById('reassignTargetModal');
+      const nameSpan = document.getElementById('reassignPlayerName');
+      const idInput = document.getElementById('reassignPlayerId');
+      const oldTargetIdInput = document.getElementById('reassignOldTargetId');
+      const oldTargetNameInput = document.getElementById('reassignOldTargetName');
+      const selectDropdown = document.getElementById('newTargetSelect');
+      const saveBtn = document.getElementById('saveReassignBtn');
+      const errorMsg = document.getElementById('reassign-loading-error');
 
-    // 2. Fetch all active, approved players to populate the dropdown
-    const playersSnapshot = await db.collection('players')
-      .where('status', '==', 'active')
-      .where('approvalStatus', '==', 'approved')
-      .get();
 
-    selectDropdown.innerHTML = '<option value="" disabled selected>Select New Target...</option>'; // Set default prompt
-    let eligibleCount = 0;
+      if (!modal || !nameSpan || !idInput || !selectDropdown || !saveBtn || !errorMsg || !oldTargetIdInput || !oldTargetNameInput) {
+        console.error("Reassign Target Modal elements missing!");
+        alert("Error: Could not open target reassignment dialog.");
+        return;
+      }
 
-    if (playersSnapshot.empty) {
-      console.warn("No active/approved players found.");
-    } else {
-      playersSnapshot.forEach(doc => {
-        const potentialTargetId = doc.id;
-        const potentialTarget = doc.data();
+      // Reset and show loading state
+      nameSpan.textContent = playerName;
+      idInput.value = playerId;
+      oldTargetIdInput.value = ''; // Clear previous values
+      oldTargetNameInput.value = '';
+      selectDropdown.innerHTML = '<option value="" disabled selected>Loading eligible targets...</option>';
+      selectDropdown.disabled = true;
+      saveBtn.disabled = true;
+      errorMsg.style.display = 'none';
+      modal.style.display = 'flex'; // Show modal
 
-        // Add player to dropdown IF:
-        // - They are not the player being reassigned (playerId)
-        // - They are not the player's CURRENT target (currentTargetId) - Optional, but prevents assigning same target again
-        if (potentialTargetId !== playerId && potentialTargetId !== currentTargetId) {
-          const option = document.createElement('option');
-          option.value = potentialTargetId;
-          // Include email or short ID for clarity if names aren't unique
-          option.textContent = `${potentialTarget.fullName || 'Unknown Name'} (${potentialTarget.email || potentialTargetId.substring(0,6)+'...' })`;
-          option.dataset.academy = potentialTarget.academy || ''; // Store extra data
-          option.dataset.instagram = potentialTarget.instagram || '';
-          selectDropdown.appendChild(option);
-          eligibleCount++;
+      try {
+        // 1. Get the player's current target (for reference and to exclude)
+        let currentTargetId = null;
+        const playerAssignDoc = await db.collection('targets').doc(playerId).get();
+        if (playerAssignDoc.exists) {
+          currentTargetId = playerAssignDoc.data().targetId;
+          oldTargetIdInput.value = currentTargetId || ''; // Store old target ID
+          oldTargetNameInput.value = playerAssignDoc.data().targetName || ''; // Store old target name
+          console.log(`Current target is: ${currentTargetId}`);
+        } else {
+          console.log(`No current target assignment found for ${playerName}`);
         }
-      });
+
+
+        // 2. Fetch all active, approved players to populate the dropdown
+        const playersSnapshot = await db.collection('players')
+          .where('status', '==', 'active')
+          .where('approvalStatus', '==', 'approved')
+          .get();
+
+        selectDropdown.innerHTML = '<option value="" disabled selected>Select New Target...</option>'; // Set default prompt
+        let eligibleCount = 0;
+
+        if (playersSnapshot.empty) {
+          console.warn("No active/approved players found.");
+        } else {
+          playersSnapshot.forEach(doc => {
+            const potentialTargetId = doc.id;
+            const potentialTarget = doc.data();
+
+            // Add player to dropdown IF:
+            // - They are not the player being reassigned (playerId)
+            // - They are not the player's CURRENT target (currentTargetId) - Optional, but prevents assigning same target again
+            if (potentialTargetId !== playerId && potentialTargetId !== currentTargetId) {
+              const option = document.createElement('option');
+              option.value = potentialTargetId;
+              // Include email or short ID for clarity if names aren't unique
+              option.textContent = `${potentialTarget.fullName || 'Unknown Name'} (${potentialTarget.email || potentialTargetId.substring(0, 6) + '...'})`;
+              option.dataset.academy = potentialTarget.academy || ''; // Store extra data
+              option.dataset.instagram = potentialTarget.instagram || '';
+              selectDropdown.appendChild(option);
+              eligibleCount++;
+            }
+          });
+        }
+
+        // 3. Enable dropdown and save button if targets are available
+        if (eligibleCount > 0) {
+          selectDropdown.disabled = false;
+          saveBtn.disabled = false; // Enable save only if there are options
+          console.log(`Populated dropdown with ${eligibleCount} eligible targets.`);
+        } else {
+          selectDropdown.innerHTML = '<option value="" disabled selected>No eligible targets found</option>';
+          console.warn("No eligible targets found to reassign.");
+          // Keep save button disabled
+        }
+
+      } catch (error) {
+        console.error("Error fetching eligible targets:", error);
+        errorMsg.textContent = `Error loading targets: ${error.message}`;
+        errorMsg.style.display = 'block';
+        selectDropdown.innerHTML = '<option value="" disabled selected>Error loading targets</option>';
+        selectDropdown.disabled = true;
+        saveBtn.disabled = true;
+      }
     }
 
-    // 3. Enable dropdown and save button if targets are available
-    if (eligibleCount > 0) {
-      selectDropdown.disabled = false;
-      saveBtn.disabled = false; // Enable save only if there are options
-       console.log(`Populated dropdown with ${eligibleCount} eligible targets.`);
-    } else {
-      selectDropdown.innerHTML = '<option value="" disabled selected>No eligible targets found</option>';
-      console.warn("No eligible targets found to reassign.");
-       // Keep save button disabled
+
+    async function saveReassignedTarget(event) {
+      event.preventDefault();
+      const playerId = document.getElementById('reassignPlayerId').value;
+      const selectDropdown = document.getElementById('newTargetSelect');
+      const newTargetId = selectDropdown.value;
+      const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
+
+      // Get old target info for logging
+      const oldTargetId = document.getElementById('reassignOldTargetId').value || null;
+      const oldTargetName = document.getElementById('reassignOldTargetName').value || 'None';
+
+
+      if (!playerId || !newTargetId) {
+        alert('Please select a valid new target.');
+        return;
+      }
+
+      // Extract new target details from selected option or fetch if needed
+      const newTargetName = selectedOption.textContent.split(' (')[0]; // Get name part
+      const newTargetAcademy = selectedOption.dataset.academy || null;
+      const newTargetInstagram = selectedOption.dataset.instagram || null;
+
+
+      console.log(`Reassigning target for player ${playerId} to ${newTargetName} (${newTargetId})`);
+      const saveButton = document.getElementById('saveReassignBtn');
+      saveButton.disabled = true;
+      saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      // Firestore References
+      const playerRef = db.collection('players').doc(playerId);
+      const playerTargetAssignmentRef = db.collection('targets').doc(playerId);
+      const activityRef = db.collection('activity').doc();
+      const batch = db.batch(); // Use batch for simplicity here
+      const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+      try {
+        // Fetch current player name (needed for targets collection update)
+        const playerDoc = await playerRef.get();
+        const playerName = playerDoc.exists ? playerDoc.data().fullName : 'Unknown Player';
+
+
+        // 1. Update the Player document in 'players' collection
+        batch.update(playerRef, {
+          targetId: newTargetId,
+          targetName: newTargetName,
+          targetAcademy: newTargetAcademy,
+          targetInstagram: newTargetInstagram,
+          status: 'active' // Ensure player remains active
+        });
+
+        // 2. Update the Player's entry in the 'targets' collection
+        // Use set with merge to ensure it creates/updates the document
+        batch.set(playerTargetAssignmentRef, {
+          playerId: playerId, // Redundant but good for consistency
+          playerName: playerName, // Make sure we have the player's name
+          targetId: newTargetId,
+          targetName: newTargetName,
+          targetAcademy: newTargetAcademy,
+          targetInstagram: newTargetInstagram,
+          status: 'active', // Ensure target assignment is active
+          assignedAt: timestamp // Update assignment time
+        }, { merge: true });
+
+        // 3. Log the Activity
+        batch.set(activityRef, {
+          type: 'target-reassigned-admin',
+          adminId: currentAdmin?.uid || 'unknown',
+          playerId: playerId,
+          playerName: playerName,
+          oldTargetId: oldTargetId,
+          oldTargetName: oldTargetName,
+          newTargetId: newTargetId,
+          newTargetName: newTargetName,
+          timestamp: timestamp,
+          status: 'completed'
+        });
+
+        // 4. Commit the batch
+        await batch.commit();
+        alert(`Successfully reassigned target for ${playerName} to ${newTargetName}.`);
+        hideReassignTargetModal();
+        // The listener on loadTargets should redraw the table automatically
+
+      } catch (error) {
+        console.error("Error saving reassigned target:", error);
+        alert(`Failed to reassign target: ${error.message}`);
+      } finally {
+        // Re-enable button
+        saveButton.disabled = false; // Re-enable even on failure if modal isn't closed
+        saveButton.innerHTML = 'Save New Target';
+      }
     }
-
-  } catch (error) {
-    console.error("Error fetching eligible targets:", error);
-    errorMsg.textContent = `Error loading targets: ${error.message}`;
-    errorMsg.style.display = 'block';
-    selectDropdown.innerHTML = '<option value="" disabled selected>Error loading targets</option>';
-    selectDropdown.disabled = true;
-    saveBtn.disabled = true;
-  }
-}
-
-
-async function saveReassignedTarget(event) {
-  event.preventDefault();
-  const playerId = document.getElementById('reassignPlayerId').value;
-  const selectDropdown = document.getElementById('newTargetSelect');
-  const newTargetId = selectDropdown.value;
-  const selectedOption = selectDropdown.options[selectDropdown.selectedIndex];
-
-  // Get old target info for logging
-  const oldTargetId = document.getElementById('reassignOldTargetId').value || null;
-  const oldTargetName = document.getElementById('reassignOldTargetName').value || 'None';
-
-
-  if (!playerId || !newTargetId) {
-    alert('Please select a valid new target.');
-    return;
-  }
-
-  // Extract new target details from selected option or fetch if needed
-  const newTargetName = selectedOption.textContent.split(' (')[0]; // Get name part
-  const newTargetAcademy = selectedOption.dataset.academy || null;
-  const newTargetInstagram = selectedOption.dataset.instagram || null;
-
-
-  console.log(`Reassigning target for player ${playerId} to ${newTargetName} (${newTargetId})`);
-  const saveButton = document.getElementById('saveReassignBtn');
-  saveButton.disabled = true;
-  saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-
-  // Firestore References
-  const playerRef = db.collection('players').doc(playerId);
-  const playerTargetAssignmentRef = db.collection('targets').doc(playerId);
-  const activityRef = db.collection('activity').doc();
-  const batch = db.batch(); // Use batch for simplicity here
-  const timestamp = firebase.firestore.FieldValue.serverTimestamp();
-
-  try {
-      // Fetch current player name (needed for targets collection update)
-       const playerDoc = await playerRef.get();
-       const playerName = playerDoc.exists ? playerDoc.data().fullName : 'Unknown Player';
-
-
-    // 1. Update the Player document in 'players' collection
-    batch.update(playerRef, {
-      targetId: newTargetId,
-      targetName: newTargetName,
-      targetAcademy: newTargetAcademy,
-      targetInstagram: newTargetInstagram,
-      status: 'active' // Ensure player remains active
-    });
-
-    // 2. Update the Player's entry in the 'targets' collection
-    // Use set with merge to ensure it creates/updates the document
-    batch.set(playerTargetAssignmentRef, {
-      playerId: playerId, // Redundant but good for consistency
-      playerName: playerName, // Make sure we have the player's name
-      targetId: newTargetId,
-      targetName: newTargetName,
-      targetAcademy: newTargetAcademy,
-      targetInstagram: newTargetInstagram,
-      status: 'active', // Ensure target assignment is active
-      assignedAt: timestamp // Update assignment time
-    }, { merge: true });
-
-    // 3. Log the Activity
-    batch.set(activityRef, {
-      type: 'target-reassigned-admin',
-      adminId: currentAdmin?.uid || 'unknown',
-      playerId: playerId,
-      playerName: playerName,
-      oldTargetId: oldTargetId,
-      oldTargetName: oldTargetName,
-      newTargetId: newTargetId,
-      newTargetName: newTargetName,
-      timestamp: timestamp,
-      status: 'completed'
-    });
-
-    // 4. Commit the batch
-    await batch.commit();
-    alert(`Successfully reassigned target for ${playerName} to ${newTargetName}.`);
-    hideReassignTargetModal();
-    // The listener on loadTargets should redraw the table automatically
-
-  } catch (error) {
-    console.error("Error saving reassigned target:", error);
-    alert(`Failed to reassign target: ${error.message}`);
-  } finally {
-    // Re-enable button
-    saveButton.disabled = false; // Re-enable even on failure if modal isn't closed
-    saveButton.innerHTML = 'Save New Target';
-  }
-}
 
     // --- Add Player Modal Functions ---
     function showAddPlayerModal() {
