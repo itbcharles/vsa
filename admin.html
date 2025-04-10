@@ -1104,11 +1104,14 @@
 
           // Load data for the selected section
           console.log(`Navigating to and loading section: ${effectiveSectionName}`);
+          // Load data for the selected section
+          console.log(`Navigating to and loading section: ${effectiveSectionName}`);
           switch (effectiveSectionName) {
             case 'dashboard':
               initDashboard();
               break;
             case 'players':
+              loadPlayers(); // <--- ADD THIS LINE BACK
               break;
             case 'targets':
               loadTargets();
@@ -1119,7 +1122,8 @@
               // Update filter button styles (make 'pending' button visually active)
               document.querySelectorAll('#reports-section .filter-controls .btn').forEach(btn => {
                 btn.classList.remove('btn-primary'); // Remove active style from all filter buttons
-                if (btn.textContent.toLowerCase().includes('pending')) {
+                // Adjust the condition if your button text changes
+                if (btn.getAttribute('onclick') === "filterReports('pending')") {
                   btn.classList.add('btn-primary'); // Add active style to pending button
                 }
               });
@@ -1410,7 +1414,7 @@
         tbody.innerHTML = `<tr><td colspan="6" class="error-state"><i class="fas fa-exclamation-circle"></i> Failed to start players listener</td></tr>`;
       }
     }
-    
+
     function getApprovalStatusClass(status) {
       switch (status) {
         case 'approved': return 'status-active'; // Use success style
